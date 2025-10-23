@@ -141,6 +141,12 @@
 			<version>6.1.5</version>
 		</dependency>
 
+		<dependency>
+			<groupId>io.minio</groupId>
+			<artifactId>minio</artifactId>
+			<version>${minio.version}</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>
