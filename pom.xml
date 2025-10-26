@@ -14,7 +14,7 @@
 	<name>dcloud-aipan</name>
 	<description>dcloud-aipan</description>
 	<url/>
-<!--    <repositories>--> -->
+<!--    <repositories>-->
 	<licenses>
 		<license/>
 	</licenses>
@@ -35,7 +35,7 @@
 		<common-io.version>2.8.0</common-io.version>
 		<fastjson.version>2.0.42</fastjson.version>
 		<mysql.version>8.0.27</mysql.version>
-		<minio.version>8.3.7</minio.version>
+<!--		<minio.version>8.3.7</minio.version>-->
 	</properties>
 	<dependencies>
 		<!-- Spring Boot Web依赖 -->
@@ -44,28 +44,24 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 			<version>3.3.4</version>
 		</dependency>
-
 		<!-- 切面 -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-aop</artifactId>
 			<version>3.0.5</version>
 		</dependency>
-
 		<!-- 数据库连接 -->
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
 			<version>8.0.27</version>
 		</dependency>
-
 		<!-- Lombok依赖 -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<version>1.18.30</version>
 		</dependency>
-
 		<!-- 测试依赖 -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -73,21 +69,18 @@
 			<scope>test</scope>
 			<version>3.3.1</version>
 		</dependency>
-
 		<!-- AWS S3 SDK -->
 		<dependency>
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-java-sdk-s3</artifactId>
 			<version>${aws-java-sdk-s3.version}</version>
 		</dependency>
-
 		<!-- JWT支持 -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt</artifactId>
 			<version>0.12.3</version>
 		</dependency>
-
 		<!-- MyBatis-Plus依赖 -->
 		<dependency>
 			<groupId>com.baomidou</groupId>
@@ -107,48 +100,35 @@
 			<version>2.0</version>
 		</dependency>
 		<!-- 代码自动生成依赖 end-->
-
 		<!-- Hutool依赖 -->
 		<dependency>
 			<groupId>cn.hutool</groupId>
 			<artifactId>hutool-all</artifactId>
 			<version>${hutool-all.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>io.minio</groupId>
 			<artifactId>minio</artifactId>
 			<version>${minio.version}</version>
 		</dependency>
-
 		<!-- Fastjson依赖 -->
 		<dependency>
 			<groupId>com.alibaba</groupId>
 			<artifactId>fastjson</artifactId>
 			<version>${fastjson.version}</version>
 		</dependency>
-
 		<!-- knife4j 依赖，接口文档工具 -->
 		<dependency>
 			<groupId>com.github.xiaoymin</groupId>
 			<artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
 			<version>4.4.0</version>
 		</dependency>
-
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-web</artifactId>
 			<version>6.1.5</version>
 		</dependency>
-
-		<dependency>
-			<groupId>io.minio</groupId>
-			<artifactId>minio</artifactId>
-			<version>${minio.version}</version>
-		</dependency>
-
 	</dependencies>
-
 	<build>
 		<plugins>
 			<plugin>
@@ -173,7 +153,5 @@
 				</configuration>
 			</plugin>
 		</plugins>
-
 	</build>
-
 </project>

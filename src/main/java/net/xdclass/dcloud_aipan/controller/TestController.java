@@ -1,8 +1,8 @@
 package net.xdclass.dcloud_aipan.controller;
 
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
-import io.minio.errors.*;
+//import io.minio.MinioClient;
+//import io.minio.PutObjectArgs;
+//import io.minio.errors.*;
 import net.xdclass.dcloud_aipan.config.MinioConfig;
 import net.xdclass.dcloud_aipan.util.CommonUtil;
 import net.xdclass.dcloud_aipan.util.JsonData;
@@ -21,8 +21,8 @@ public class TestController {
     @Autowired
     private MinioConfig minioConfig;
 
-    @Autowired
-    private MinioClient minioClient;
+//    @Autowired
+//    private MinioClient minioClient;
 
     @PostMapping("upload")
     public JsonData testUpload(@RequestParam("file") MultipartFile file) {
@@ -32,10 +32,10 @@ public class TestController {
         // 读取文件流，上传到 minio存储桶中
         try {
             InputStream inputStream = file.getInputStream();
-            minioClient.putObject(PutObjectArgs.builder().bucket(minioConfig.getBucketName())
-                    .object(filePath)
-                    .stream(inputStream, file.getSize(), -1)
-                    .build());
+//            minioClient.putObject(PutObjectArgs.builder().bucket(minioConfig.getBucketName())
+//                    .object(filePath)
+//                    .stream(inputStream, file.getSize(), -1)
+//                    .build());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
