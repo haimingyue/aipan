@@ -14,16 +14,9 @@ public class MinioConfig {
     private String accessKey;
     private String accessSecret;
     private String bucketName;
+    private String avatarBucketName;
 
 
     // 预签名的URL 过期时间
     private Long PRE_SIGN_URL_EXPIRE_TIME = 60 * 10 * 1000L;
-
-//    @Bean
-//    public MinioClient getMinioClient() {
-//        return MinioClient.builder()
-//                .endpoint(endpoint)
-//                .credentials(accessKey, accessSecret)
-//                .build();
-//    }
 }

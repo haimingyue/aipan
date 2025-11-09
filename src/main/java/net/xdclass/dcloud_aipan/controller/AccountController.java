@@ -5,10 +5,8 @@ import net.xdclass.dcloud_aipan.controller.req.AccountRegisterReq;
 import net.xdclass.dcloud_aipan.service.AccountService;
 import net.xdclass.dcloud_aipan.util.JsonData;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @Slf4j
@@ -25,6 +23,12 @@ public class AccountController {
     public JsonData register(@RequestBody AccountRegisterReq  req) {
         accountService.register(req);
         return JsonData.buildSuccess();
+    }
+
+    @PostMapping("upload_avatar")
+    public JsonData uploadAvatar(@RequestParam("file") MultipartFile file) {
+        String url = accountService.uploadAvatar(file);
+        return JsonData.buildSuccess(url);
     }
 
 }
