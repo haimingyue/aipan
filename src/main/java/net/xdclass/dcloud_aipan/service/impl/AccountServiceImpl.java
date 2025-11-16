@@ -6,16 +6,21 @@ import net.xdclass.dcloud_aipan.component.MinIoFileStoreEngine;
 import net.xdclass.dcloud_aipan.config.AccountConfig;
 import net.xdclass.dcloud_aipan.config.MinioConfig;
 import net.xdclass.dcloud_aipan.controller.req.AccountRegisterReq;
+import net.xdclass.dcloud_aipan.controller.req.FolderCreateReq;
 import net.xdclass.dcloud_aipan.enums.AccountRoleEnum;
 import net.xdclass.dcloud_aipan.enums.BizCodeEnum;
 import net.xdclass.dcloud_aipan.exception.BizException;
 import net.xdclass.dcloud_aipan.mapper.AccountMapper;
+import net.xdclass.dcloud_aipan.mapper.StorageMapper;
 import net.xdclass.dcloud_aipan.model.AccountDO;
+import net.xdclass.dcloud_aipan.model.StorageDO;
+import net.xdclass.dcloud_aipan.service.AccountFileService;
 import net.xdclass.dcloud_aipan.service.AccountService;
 import net.xdclass.dcloud_aipan.util.CommonUtil;
 import net.xdclass.dcloud_aipan.util.SpringBeanUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,6 +36,10 @@ public class AccountServiceImpl implements AccountService {
     private MinIoFileStoreEngine minIoFileStoreEngine;
     @Autowired
     private MinioConfig minioConfig;
+    @Autowired
+    private StorageMapper storageMapper;
+    @Autowired
+    private AccountFileService accountFileService;
 
 
     /**
@@ -40,6 +49,7 @@ public class AccountServiceImpl implements AccountService {
      * @param req
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void register(AccountRegisterReq req) {
         // 1. 查询手机号是否注册
         List<AccountDO> accountDOList =  accountMapper.selectList(new QueryWrapper<AccountDO>().eq("phone", req.getPhone()));
@@ -54,7 +64,19 @@ public class AccountServiceImpl implements AccountService {
         accountDO.setPassword(digestAsHex);
         accountDO.setRole(AccountRoleEnum.COMMON.name());
         accountMapper.insert(accountDO);
-        // 4. 其他操作 TODO
+        // 4. 创建存储空间
+        StorageDO storageDO = new StorageDO();
+        storageDO.setAccountId(accountDO.getId());
+        storageDO.setUsedSize(0L);
+        storageDO.setTotalSize(AccountConfig.DEFAULT_STORAGE_SIZE);
+        storageMapper.insert(storageDO);
+        // 5. 初始化根目录
+        FolderCreateReq rootFolderReq = FolderCreateReq.builder()
+                .accountId(accountDO.getId())
+                .folderName(AccountConfig.ROOT_FOLDER_NAME)
+                .parentId(AccountConfig.ROOT_PARENT_ID)
+                .build();
+        accountFileService.createFolder(rootFolderReq);
     }
 
     @Override
