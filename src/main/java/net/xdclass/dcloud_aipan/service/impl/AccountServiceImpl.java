@@ -5,8 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import net.xdclass.dcloud_aipan.component.MinIoFileStoreEngine;
 import net.xdclass.dcloud_aipan.config.AccountConfig;
 import net.xdclass.dcloud_aipan.config.MinioConfig;
+import net.xdclass.dcloud_aipan.controller.req.AccountLoginReq;
 import net.xdclass.dcloud_aipan.controller.req.AccountRegisterReq;
 import net.xdclass.dcloud_aipan.controller.req.FolderCreateReq;
+import net.xdclass.dcloud_aipan.dto.AccountDTO;
 import net.xdclass.dcloud_aipan.enums.AccountRoleEnum;
 import net.xdclass.dcloud_aipan.enums.BizCodeEnum;
 import net.xdclass.dcloud_aipan.exception.BizException;
@@ -46,7 +48,6 @@ public class AccountServiceImpl implements AccountService {
      *
      * 3. 插入数据库
      * 4. 其他相关初始化操作
-     * @param req
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -84,5 +85,18 @@ public class AccountServiceImpl implements AccountService {
         String filename = CommonUtil.getFilePath(file.getOriginalFilename());
         minIoFileStoreEngine.upload(minioConfig.getAvatarBucketName(), filename, file);
         return minioConfig.getEndpoint() + "/" + minioConfig.getAvatarBucketName() + "/" + filename;
+    }
+
+    @Override
+    public AccountDTO login(AccountLoginReq req) {
+        // 处理密码
+        String digestAsHex = DigestUtils.md5DigestAsHex((AccountConfig.ACCOUNT_SALT + req.getPassword()).getBytes());
+        AccountDO accountDO = accountMapper.selectOne(new QueryWrapper<AccountDO>().eq("phone", req.getPhone()).eq("password", digestAsHex));
+
+        if (accountDO == null) {
+            throw new BizException(BizCodeEnum.ACCOUNT_PWD_ERROR);
+        }
+
+        return SpringBeanUtil.copyProperties(accountDO, AccountDTO.class);
     }
 }
