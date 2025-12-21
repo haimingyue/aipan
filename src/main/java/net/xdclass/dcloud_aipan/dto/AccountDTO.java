@@ -2,8 +2,7 @@ package net.xdclass.dcloud_aipan.dto;
 
 import com.baomidou.mybatisplus.annotation.*;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -19,6 +18,9 @@ import java.util.Date;
 @Getter
 @Setter
 @Schema(name = "AccountDTO", description = "用户信息表")
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class AccountDTO implements Serializable {
 
     @Schema(description = "ID")
