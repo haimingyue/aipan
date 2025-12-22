@@ -9,12 +9,15 @@ import net.xdclass.dcloud_aipan.controller.req.AccountLoginReq;
 import net.xdclass.dcloud_aipan.controller.req.AccountRegisterReq;
 import net.xdclass.dcloud_aipan.controller.req.FolderCreateReq;
 import net.xdclass.dcloud_aipan.dto.AccountDTO;
+import net.xdclass.dcloud_aipan.dto.StorageDTO;
 import net.xdclass.dcloud_aipan.enums.AccountRoleEnum;
 import net.xdclass.dcloud_aipan.enums.BizCodeEnum;
 import net.xdclass.dcloud_aipan.exception.BizException;
+import net.xdclass.dcloud_aipan.mapper.AccountFileMapper;
 import net.xdclass.dcloud_aipan.mapper.AccountMapper;
 import net.xdclass.dcloud_aipan.mapper.StorageMapper;
 import net.xdclass.dcloud_aipan.model.AccountDO;
+import net.xdclass.dcloud_aipan.model.AccountFileDO;
 import net.xdclass.dcloud_aipan.model.StorageDO;
 import net.xdclass.dcloud_aipan.service.AccountFileService;
 import net.xdclass.dcloud_aipan.service.AccountService;
@@ -42,6 +45,8 @@ public class AccountServiceImpl implements AccountService {
     private StorageMapper storageMapper;
     @Autowired
     private AccountFileService accountFileService;
+    @Autowired
+    private AccountFileMapper accountFileMapper;
 
 
     /**
@@ -98,5 +103,23 @@ public class AccountServiceImpl implements AccountService {
         }
 
         return SpringBeanUtil.copyProperties(accountDO, AccountDTO.class);
+    }
+
+    @Override
+    public AccountDTO queryDetail(Long id) {
+        AccountDO accountDO = accountMapper.selectById(id);
+        AccountDTO accountDTO = SpringBeanUtil.copyProperties(accountDO, AccountDTO.class);
+
+        // 获取存储信息
+        StorageDO storageDO = storageMapper.selectOne(new QueryWrapper<StorageDO>().eq("account_id", id));
+        accountDTO.setStorageDTO(SpringBeanUtil.copyProperties(storageDO, StorageDTO.class));
+
+        // 获取文件信息
+        AccountFileDO accountFileDO = accountFileMapper.selectOne(new QueryWrapper<AccountFileDO>().eq("account_id", id).eq("parent_id", AccountConfig.ROOT_PARENT_ID));
+        accountDTO.setRootFileId(accountFileDO.getId());
+        accountDTO.setRootFileName(accountFileDO.getFileName());
+
+        return accountDTO;
+
     }
 }

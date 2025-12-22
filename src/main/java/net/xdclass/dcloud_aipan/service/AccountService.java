@@ -6,9 +6,13 @@ import net.xdclass.dcloud_aipan.dto.AccountDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface AccountService {
+
+
     void register(AccountRegisterReq req);
 
     String uploadAvatar(MultipartFile file);
 
     AccountDTO login(AccountLoginReq req);
+
+    AccountDTO queryDetail(Long id);
 }

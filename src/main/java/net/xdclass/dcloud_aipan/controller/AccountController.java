@@ -5,6 +5,7 @@ import net.xdclass.dcloud_aipan.controller.req.AccountLoginReq;
 import net.xdclass.dcloud_aipan.controller.req.AccountRegisterReq;
 import net.xdclass.dcloud_aipan.dto.AccountDTO;
 import net.xdclass.dcloud_aipan.enums.BizCodeEnum;
+import net.xdclass.dcloud_aipan.interceptor.LoginInterceptor;
 import net.xdclass.dcloud_aipan.service.AccountService;
 import net.xdclass.dcloud_aipan.util.JsonData;
 import net.xdclass.dcloud_aipan.util.JwtUtil;
@@ -43,4 +44,12 @@ public class AccountController {
         return JsonData.buildSuccess(token);
     }
 
+    /**
+     * 获取用户详情接口
+     */
+    @GetMapping("detail")
+    public JsonData detail() {
+        AccountDTO accountDTO = accountService.queryDetail(LoginInterceptor.threadLocal.get().getId());
+        return JsonData.buildSuccess(accountDTO);
+    }
 }
