@@ -1,8 +1,10 @@
 package net.xdclass.dcloud_aipan.controller.req;
 
+import lombok.Builder;
 import lombok.Data;
 
 @Data
+@Builder
 public class AccountLoginReq {
     /**
      * 密码
