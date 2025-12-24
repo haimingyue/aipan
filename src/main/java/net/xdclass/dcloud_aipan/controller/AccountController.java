@@ -1,5 +1,6 @@
 package net.xdclass.dcloud_aipan.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.dcloud_aipan.controller.req.AccountLoginReq;
 import net.xdclass.dcloud_aipan.controller.req.AccountRegisterReq;
@@ -13,8 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-@RestController
 @Slf4j
+@RestController
+@Tag(name = "账号模块", description = "账号注册、登录、详情接口")
 @RequestMapping("/api/account/v1")
 public class AccountController {
 
