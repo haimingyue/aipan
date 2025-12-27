@@ -1,8 +1,8 @@
 package net.xdclass.dcloud_aipan.dto;
 
-import com.baomidou.mybatisplus.annotation.*;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -17,17 +17,19 @@ import java.util.Date;
  */
 @Getter
 @Setter
-@Schema(name = "AccountDTO", description = "用户信息表")
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
+@Schema(name = "AccountDO", description = "用户信息表")
 public class AccountDTO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @Schema(description = "ID")
     private Long id;
 
     @Schema(description = "用户名")
     private String username;
+
+    @Schema(description = "密码")
+    private String password;
 
     @Schema(description = "用户头像")
     private String avatarUrl;
@@ -39,7 +41,6 @@ public class AccountDTO implements Serializable {
     private String role;
 
     @Schema(description = "逻辑删除（1删除 0未删除）")
-    @TableLogic
     private Boolean del;
 
     @Schema(description = "创建时间")
@@ -47,19 +48,4 @@ public class AccountDTO implements Serializable {
 
     @Schema(description = "更新时间")
     private Date gmtModified;
-
-    /**
-     * 根文件夹 ID
-     */
-    private Long rootFileId;
-
-    /**
-     * 根文件夹名称
-     */
-    private String rootFileName;
-
-    /**
-     * 存储信息表
-     */
-    private StorageDTO storageDTO;
 }

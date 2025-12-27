@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.xdclass.dcloud_aipan.controller.req.AccountLoginReq;
 import net.xdclass.dcloud_aipan.controller.req.AccountRegisterReq;
 import net.xdclass.dcloud_aipan.dto.AccountDTO;
-import net.xdclass.dcloud_aipan.enums.BizCodeEnum;
 import net.xdclass.dcloud_aipan.interceptor.LoginInterceptor;
 import net.xdclass.dcloud_aipan.service.AccountService;
 import net.xdclass.dcloud_aipan.util.JsonData;
