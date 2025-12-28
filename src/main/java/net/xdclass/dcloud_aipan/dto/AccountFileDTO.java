@@ -1,9 +1,7 @@
 package net.xdclass.dcloud_aipan.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -19,6 +17,8 @@ import java.util.Date;
  */
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Schema(name = "AccountFileDO", description = "用户文件关联表")
 @Builder
 public class AccountFileDTO implements Serializable {

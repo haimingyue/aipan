@@ -99,21 +99,21 @@ public class AccountFileServiceImpl implements AccountFileService {
         if (selectCount > 0) {
             // 处理文件夹
             if (Objects.equals(accountFileDO.getIsDir(), FolderFlagEnum.YES.getCode())) {
-                accountFileDO.setFileName(accountFileDO.getFileName() + "(1)");
+                accountFileDO.setFileName(accountFileDO.getFileName() + "_" + System.currentTimeMillis());
             } else {
                 // 处理文件：后续可按需求添加文件重名处理策略
                 // 提前文件拓展名
                 String[] split = accountFileDO.getFileName().split("\\.");
                 String fileName = split[0];
                 String fileSuffix = split[1];
-                accountFileDO.setFileName(fileName + "(1)" + "." + fileSuffix);
+                accountFileDO.setFileName(fileName + "_" + System.currentTimeMillis() + "." + fileSuffix);
             }
         }
     }
 
     private void checkAccountFileId(AccountFileDTO accountFileDTO) {
         Long parentId = accountFileDTO.getParentId();
-        if (parentId != null) {
+        if (parentId != 0) {
             AccountFileDO parentFile = accountFileMapper.selectOne(new QueryWrapper<AccountFileDO>()
                     .eq("id", parentId)
                     .eq("account_id", accountFileDTO.getAccountId()));
