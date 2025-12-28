@@ -2,6 +2,7 @@ package net.xdclass.dcloud_aipan.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
+import net.xdclass.dcloud_aipan.controller.req.FileUpdateReq;
 import net.xdclass.dcloud_aipan.controller.req.FolderCreateReq;
 import net.xdclass.dcloud_aipan.dto.AccountFileDTO;
 import net.xdclass.dcloud_aipan.enums.BizCodeEnum;
@@ -46,6 +47,33 @@ public class AccountFileServiceImpl implements AccountFileService {
                 .isDir(FolderFlagEnum.YES.getCode())
                 .build();
         return saveAccountFile(accountFileDTO);
+    }
+
+    @Override
+    public void renameFile(FileUpdateReq req) {
+        AccountFileDO accountFileDO = accountFileMapper.selectOne(new QueryWrapper<AccountFileDO>()
+                .eq("id", req.getFileId())
+                .eq("account_id", req.getAccountId()));
+
+        if (accountFileDO == null) {
+            log.error("文件不存在");
+            throw new BizException(BizCodeEnum.FILE_NOT_EXISTS);
+        } else {
+            // 新旧文件名不能一样
+            if (Objects.equals(req.getNewFileName(), accountFileDO.getFileName())) {
+                throw new BizException(BizCodeEnum.FILE_RENAME_REPEAT);
+            }
+            // 同层文件名不能一样
+            Long selectCount = accountFileMapper.selectCount(new QueryWrapper<AccountFileDO>()
+                    .eq("account_id", req.getAccountId())
+                    .eq("parent_id", accountFileDO.getParentId())
+                    .eq("file_name", req.getNewFileName()));
+            if (selectCount > 0) {
+                throw new BizException(BizCodeEnum.FILE_RENAME_REPEAT);
+            }
+            accountFileDO.setFileName(req.getNewFileName());
+            accountFileMapper.updateById(accountFileDO);
+        }
     }
 
     private Long saveAccountFile(AccountFileDTO accountFileDTO) {

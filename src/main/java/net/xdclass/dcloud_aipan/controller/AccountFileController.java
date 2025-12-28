@@ -1,5 +1,6 @@
 package net.xdclass.dcloud_aipan.controller;
 
+import net.xdclass.dcloud_aipan.controller.req.FileUpdateReq;
 import net.xdclass.dcloud_aipan.controller.req.FolderCreateReq;
 import net.xdclass.dcloud_aipan.dto.AccountFileDTO;
 import net.xdclass.dcloud_aipan.interceptor.LoginInterceptor;
@@ -36,6 +37,18 @@ public class AccountFileController {
         req.setAccountId(accountId);
 
         accountFileService.createFolder(req);
+        return JsonData.buildSuccess();
+    }
+
+    /**
+     * 文件重命名
+     */
+    @PostMapping("rename_file")
+    public Object renameFile(@RequestBody FileUpdateReq req){
+        Long accountId = LoginInterceptor.threadLocal.get().getId();
+        req.setAccountId(accountId);
+
+        accountFileService.renameFile(req);
         return JsonData.buildSuccess();
     }
 }

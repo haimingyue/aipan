@@ -1,5 +1,6 @@
 package net.xdclass.dcloud_aipan.service;
 
+import net.xdclass.dcloud_aipan.controller.req.FileUpdateReq;
 import net.xdclass.dcloud_aipan.controller.req.FolderCreateReq;
 import net.xdclass.dcloud_aipan.dto.AccountFileDTO;
 
@@ -12,4 +13,6 @@ public interface AccountFileService {
     List<AccountFileDTO> listFile(Long accountId, Long parentId);
 
     Long createFolder(FolderCreateReq req);
+
+    void renameFile(FileUpdateReq req);
 }
