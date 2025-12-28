@@ -3,6 +3,7 @@ package net.xdclass.dcloud_aipan.controller;
 import net.xdclass.dcloud_aipan.controller.req.FileUpdateReq;
 import net.xdclass.dcloud_aipan.controller.req.FolderCreateReq;
 import net.xdclass.dcloud_aipan.dto.AccountFileDTO;
+import net.xdclass.dcloud_aipan.dto.FolderTreeNodeDTO;
 import net.xdclass.dcloud_aipan.interceptor.LoginInterceptor;
 import net.xdclass.dcloud_aipan.service.AccountFileService;
 import net.xdclass.dcloud_aipan.util.JsonData;
@@ -50,5 +51,15 @@ public class AccountFileController {
 
         accountFileService.renameFile(req);
         return JsonData.buildSuccess();
+    }
+
+    /**
+     * 查询文件树接口
+     */
+    @GetMapping("/folder/tree")
+    public Object folderTree(){
+        Long accountId = LoginInterceptor.threadLocal.get().getId();
+        List<FolderTreeNodeDTO> list = accountFileService.folderTree(accountId);
+        return JsonData.buildSuccess(list);
     }
 }

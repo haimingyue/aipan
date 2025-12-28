@@ -3,6 +3,7 @@ package net.xdclass.dcloud_aipan.service;
 import net.xdclass.dcloud_aipan.controller.req.FileUpdateReq;
 import net.xdclass.dcloud_aipan.controller.req.FolderCreateReq;
 import net.xdclass.dcloud_aipan.dto.AccountFileDTO;
+import net.xdclass.dcloud_aipan.dto.FolderTreeNodeDTO;
 
 import java.util.List;
 
@@ -15,4 +16,6 @@ public interface AccountFileService {
     Long createFolder(FolderCreateReq req);
 
     void renameFile(FileUpdateReq req);
+
+    List<FolderTreeNodeDTO> folderTree(Long accountId);
 }
