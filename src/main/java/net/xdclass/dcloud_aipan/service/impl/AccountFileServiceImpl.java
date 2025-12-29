@@ -29,8 +29,6 @@ public class AccountFileServiceImpl implements AccountFileService {
 
     @Autowired
     private AccountFileMapper accountFileMapper;
-    @Autowired
-    private AccountFileService accountFileService;
 
     /**
      * 获取文件列表接口
@@ -124,6 +122,41 @@ public class AccountFileServiceImpl implements AccountFileService {
 
 
 //        return rootFolderList;
+    }
+
+    @Override
+    public List<FolderTreeNodeDTO> folderTreeV2(Long accountId) {
+        List<AccountFileDO> folderList = accountFileMapper.selectList(new QueryWrapper<AccountFileDO>()
+                .eq("account_id", accountId)
+                .eq("is_dir", FolderFlagEnum.YES.getCode()));
+
+        if (CollectionUtil.isEmpty(folderList)) {
+            return List.of();
+        }
+
+        List<FolderTreeNodeDTO> folderTreeNodeDTOList = folderList.stream().map(file -> {
+            return FolderTreeNodeDTO.builder()
+                    .id(file.getId())
+                    .parentId(file.getParentId())
+                    .label(file.getFileName())
+                    .children(new ArrayList<>())
+                    .build();
+        }).toList();
+
+        // 根据父文件 ID 分组 key 是当前文件夹 id，value 是子文件夹列表
+        Map<Long, List<FolderTreeNodeDTO>> parentIdGroup = folderTreeNodeDTOList
+                .stream().collect(Collectors.groupingBy(FolderTreeNodeDTO::getParentId));
+
+        for (FolderTreeNodeDTO node: folderTreeNodeDTOList) {
+            List<FolderTreeNodeDTO> children = parentIdGroup.get(node.getId());
+            // 判断是否为空
+            if (!CollectionUtil.isEmpty(children)) {
+                node.getChildren().addAll(children);
+            }
+        }
+
+        return folderTreeNodeDTOList
+                .stream().filter(node -> Objects.equals(node.getParentId(), 0L)).collect(Collectors.toList());
     }
 
     private Long saveAccountFile(AccountFileDTO accountFileDTO) {

@@ -62,4 +62,10 @@ public class AccountFileController {
         List<FolderTreeNodeDTO> list = accountFileService.folderTree(accountId);
         return JsonData.buildSuccess(list);
     }
+
+    /**
+     * 普通小文件上传
+     */
+//    @PostMapping("upload")
+
 }

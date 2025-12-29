@@ -18,4 +18,6 @@ public interface AccountFileService {
     void renameFile(FileUpdateReq req);
 
     List<FolderTreeNodeDTO> folderTree(Long accountId);
+
+    List<FolderTreeNodeDTO> folderTreeV2(Long accountId);
 }
