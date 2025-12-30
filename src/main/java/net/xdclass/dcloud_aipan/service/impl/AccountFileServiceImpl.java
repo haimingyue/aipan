@@ -3,19 +3,27 @@ package net.xdclass.dcloud_aipan.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
+import net.xdclass.dcloud_aipan.component.StoreEngine;
+import net.xdclass.dcloud_aipan.config.MinioConfig;
 import net.xdclass.dcloud_aipan.controller.req.FileUpdateReq;
+import net.xdclass.dcloud_aipan.controller.req.FileUploadReq;
 import net.xdclass.dcloud_aipan.controller.req.FolderCreateReq;
 import net.xdclass.dcloud_aipan.dto.AccountFileDTO;
 import net.xdclass.dcloud_aipan.dto.FolderTreeNodeDTO;
 import net.xdclass.dcloud_aipan.enums.BizCodeEnum;
+import net.xdclass.dcloud_aipan.enums.FileTypeEnum;
 import net.xdclass.dcloud_aipan.enums.FolderFlagEnum;
 import net.xdclass.dcloud_aipan.exception.BizException;
 import net.xdclass.dcloud_aipan.mapper.AccountFileMapper;
+import net.xdclass.dcloud_aipan.mapper.FileMapper;
 import net.xdclass.dcloud_aipan.model.AccountFileDO;
+import net.xdclass.dcloud_aipan.model.FileDO;
 import net.xdclass.dcloud_aipan.service.AccountFileService;
+import net.xdclass.dcloud_aipan.util.CommonUtil;
 import net.xdclass.dcloud_aipan.util.SpringBeanUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +37,14 @@ public class AccountFileServiceImpl implements AccountFileService {
 
     @Autowired
     private AccountFileMapper accountFileMapper;
+
+    @Autowired
+    private StoreEngine fileStoreEngine;
+
+    @Autowired
+    MinioConfig minioConfig;
+    @Autowired
+    private FileMapper fileMapper;
 
     /**
      * 获取文件列表接口
@@ -157,6 +173,56 @@ public class AccountFileServiceImpl implements AccountFileService {
 
         return folderTreeNodeDTOList
                 .stream().filter(node -> Objects.equals(node.getParentId(), 0L)).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void fileUpload(FileUploadReq req) {
+        // 1. 上传到存储引擎
+        String storeFileObjectKey = storeFile(req);
+        // 2. 保存文件信息
+        // 3. 保存账号和文件关系
+        setFileAndAccountFile(req, storeFileObjectKey);
+
+    }
+
+    private void setFileAndAccountFile(FileUploadReq req, String storeFileObjectKey) {
+        FileDO fileDO = saveFile(req, storeFileObjectKey);
+        AccountFileDTO accountFileDTO = AccountFileDTO.builder()
+                .accountId(req.getAccountId())
+                .parentId(req.getParentId())
+                .fileId(fileDO.getId())
+                .fileName(req.getFilename())
+                .isDir(FolderFlagEnum.NO.getCode())
+                .fileSuffix(fileDO.getFileSuffix())
+                .fileSize(fileDO.getFileSize())
+                .fileType(FileTypeEnum.fromExtension(fileDO.getFileSuffix()).name())
+                .build();
+
+        saveAccountFile(accountFileDTO);
+    }
+
+    private FileDO saveFile(FileUploadReq req, String storeFileObjectKey) {
+        FileDO fileDO = new FileDO();
+        fileDO.setAccountId(req.getAccountId());
+        fileDO.setFileName(req.getFilename());
+        fileDO.setFileSize(req.getFile() != null ? req.getFile().getSize() :req.getFileSize());
+        fileDO.setFileSuffix(CommonUtil.getFileSuffix(req.getFilename()));
+        fileDO.setObjectKey(storeFileObjectKey);
+        fileDO.setIdentifier(req.getIdentifier());
+        fileMapper.insert(fileDO);
+        return fileDO;
+
+
+    }
+
+    /**
+     * 上传文件到存储引擎，返回文件路径
+     */
+    private String storeFile(FileUploadReq req) {
+        String objectKey = CommonUtil.getFilePath(req.getFilename());
+        fileStoreEngine.upload(minioConfig.getBucketName(), objectKey, req.getFile());
+        return objectKey;
     }
 
     private Long saveAccountFile(AccountFileDTO accountFileDTO) {

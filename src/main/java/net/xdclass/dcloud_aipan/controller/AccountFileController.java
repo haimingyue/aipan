@@ -1,6 +1,7 @@
 package net.xdclass.dcloud_aipan.controller;
 
 import net.xdclass.dcloud_aipan.controller.req.FileUpdateReq;
+import net.xdclass.dcloud_aipan.controller.req.FileUploadReq;
 import net.xdclass.dcloud_aipan.controller.req.FolderCreateReq;
 import net.xdclass.dcloud_aipan.dto.AccountFileDTO;
 import net.xdclass.dcloud_aipan.dto.FolderTreeNodeDTO;
@@ -66,6 +67,10 @@ public class AccountFileController {
     /**
      * 普通小文件上传
      */
-//    @PostMapping("upload")
-
+    @PostMapping("upload")
+    public JsonData upload(FileUploadReq req){
+        req.setAccountId(LoginInterceptor.threadLocal.get().getId());
+        accountFileService.fileUpload(req);
+        return JsonData.buildSuccess();
+    }
 }
