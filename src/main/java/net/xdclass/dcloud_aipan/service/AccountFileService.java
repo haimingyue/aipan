@@ -1,5 +1,6 @@
 package net.xdclass.dcloud_aipan.service;
 
+import net.xdclass.dcloud_aipan.controller.req.FileBatchReq;
 import net.xdclass.dcloud_aipan.controller.req.FileUpdateReq;
 import net.xdclass.dcloud_aipan.controller.req.FileUploadReq;
 import net.xdclass.dcloud_aipan.controller.req.FolderCreateReq;
@@ -23,4 +24,6 @@ public interface AccountFileService {
     List<FolderTreeNodeDTO> folderTreeV2(Long accountId);
 
     void fileUpload(FileUploadReq req);
+
+    void moveBatch(FileBatchReq req);
 }

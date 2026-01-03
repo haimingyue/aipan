@@ -1,5 +1,6 @@
 package net.xdclass.dcloud_aipan.controller;
 
+import net.xdclass.dcloud_aipan.controller.req.FileBatchReq;
 import net.xdclass.dcloud_aipan.controller.req.FileUpdateReq;
 import net.xdclass.dcloud_aipan.controller.req.FileUploadReq;
 import net.xdclass.dcloud_aipan.controller.req.FolderCreateReq;
@@ -71,6 +72,16 @@ public class AccountFileController {
     public JsonData upload(FileUploadReq req){
         req.setAccountId(LoginInterceptor.threadLocal.get().getId());
         accountFileService.fileUpload(req);
+        return JsonData.buildSuccess();
+    }
+
+    /**
+     * 文件批量移动
+     */
+    @PostMapping("move_batch")
+    public JsonData moveBatch(@RequestBody FileBatchReq req){
+        req.setAccountId(LoginInterceptor.threadLocal.get().getId());
+        accountFileService.moveBatch(req);
         return JsonData.buildSuccess();
     }
 }

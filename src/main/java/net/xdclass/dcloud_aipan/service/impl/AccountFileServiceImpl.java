@@ -2,9 +2,11 @@ package net.xdclass.dcloud_aipan.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.dcloud_aipan.component.StoreEngine;
 import net.xdclass.dcloud_aipan.config.MinioConfig;
+import net.xdclass.dcloud_aipan.controller.req.FileBatchReq;
 import net.xdclass.dcloud_aipan.controller.req.FileUpdateReq;
 import net.xdclass.dcloud_aipan.controller.req.FileUploadReq;
 import net.xdclass.dcloud_aipan.controller.req.FolderCreateReq;
@@ -25,10 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -184,6 +183,98 @@ public class AccountFileServiceImpl implements AccountFileService {
         // 3. 保存账号和文件关系
         setFileAndAccountFile(req, storeFileObjectKey);
 
+    }
+
+    /**
+     * 文件批量移动
+     * 1. 检查被移动的文件 id 是否合法
+     * 2. 检查目标文件夹id 是否合法
+     * 3. 批量移动文件到目标文件夹(重复名称处理)
+     */
+    @Override
+    public void moveBatch(FileBatchReq req) {
+        // 1. 检查被移动的文件 id 是否合法
+        List<AccountFileDO> accountFileDOList = checkFileIdLegal(req.getFileIds(), req.getAccountId());
+
+        // 2. 检查目标文件夹id 是否合法, 包括子文件夹
+        checkTargetParentIdLegal(req);
+
+        // 3. 批量移动文件到目标文件夹(重复名称处理)
+        accountFileDOList.forEach(this::processAccountFileDuplicate);
+
+        // 4. 更新文件或者文件夹 parentId 为 目标文件夹id
+        UpdateWrapper<AccountFileDO> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.in("id", req.getFileIds())
+                .set("parent_id", req.getTargetParentId());
+        int updateCount = accountFileMapper.update(null, updateWrapper);
+        if (updateCount != accountFileDOList.size()) {
+            throw new BizException(BizCodeEnum.FILE_BATCH_UPDATE_ERROR);
+        }
+    }
+
+    /**
+     * 检查目标文件夹id 是否合法, 包括子文件夹
+     * 1. 目标文件 ID 不能是文件
+     * 2. 要操作的文件列表不能包括目标文件 ID
+     */
+    private void checkTargetParentIdLegal(FileBatchReq req) {
+        AccountFileDO targetAccountFileDO = accountFileMapper.selectOne(new QueryWrapper<AccountFileDO>()
+                .eq("id", req.getTargetParentId())
+                .eq("is_dir", FolderFlagEnum.YES.getCode())
+                .eq("account_id", req.getAccountId()));
+        if (targetAccountFileDO == null) {
+            log.error("目标文件不能是文件，需要是文件夹, targetParentId={}", req.getTargetParentId());
+            throw new BizException(BizCodeEnum.FILE_BATCH_UPDATE_ERROR);
+        }
+
+        /**
+         * 要操作的文件列表不能包括目标文件 ID
+         * 1. 查询批量操作的文件和文件夹，递归处理
+         * 2. 判断是否在里面
+         */
+        List<AccountFileDO> prepareAccountFileDOS = accountFileMapper.selectList(new QueryWrapper<AccountFileDO>()
+                .eq("account_id", req.getFileIds())
+                .eq("account_id", req.getAccountId()));
+
+        // 定义一个容器存储全部文件夹，包括子文件夹
+        List<AccountFileDO> allAccountFileDOList = new ArrayList<>();
+        findAllAccountFileDOWithRecur(allAccountFileDOList, prepareAccountFileDOS, false);
+
+        if (allAccountFileDOList.stream().anyMatch(accountFileDO -> accountFileDO.getId().equals(req.getTargetParentId()))) {
+            log.error("目标文件夹不能是操作的文件夹，不能包含子文件夹, targetParentId={}", req.getTargetParentId());
+            throw new BizException(BizCodeEnum.FILE_BATCH_UPDATE_ERROR);
+        }
+    }
+
+    private void findAllAccountFileDOWithRecur(List<AccountFileDO> allAccountFileDOList, List<AccountFileDO> prepareAccountFileDOS, boolean onlyFolder) {
+        for (AccountFileDO accountFileDO : prepareAccountFileDOS) {
+            if (Objects.equals(accountFileDO.getIsDir(), FolderFlagEnum.YES.getCode())) {
+                List<AccountFileDO> childAccountFileDOList = accountFileMapper.selectList(new QueryWrapper<AccountFileDO>()
+                        .eq("parent_id", accountFileDO.getId()));
+                // 递归查找
+                findAllAccountFileDOWithRecur(allAccountFileDOList, childAccountFileDOList, onlyFolder);
+            }
+
+            // 存储相关内容，根据 onlyfolde 操作
+            if (!onlyFolder || Objects.equals(accountFileDO.getIsDir(), FolderFlagEnum.YES.getCode())) {
+                allAccountFileDOList.add(accountFileDO);
+            }
+
+        }
+    }
+
+    /**
+     * 检查文件 id 是否合法
+     */
+    private List<AccountFileDO> checkFileIdLegal(List<Long> fileIds, Long accountId) {
+        List<AccountFileDO> accountFileDOList = accountFileMapper.selectList(new QueryWrapper<AccountFileDO>()
+                .eq("account_id", accountId)
+                .in("id", fileIds));
+        if (accountFileDOList.size() != fileIds.size()) {
+            log.error("文件ID数量不合法, ids={}", fileIds );
+            throw new BizException(BizCodeEnum.FILE_BATCH_UPDATE_ERROR);
+        }
+        return accountFileDOList;
     }
 
     private void setFileAndAccountFile(FileUploadReq req, String storeFileObjectKey) {
