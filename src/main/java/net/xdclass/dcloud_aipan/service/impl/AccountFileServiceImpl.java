@@ -6,10 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.dcloud_aipan.component.StoreEngine;
 import net.xdclass.dcloud_aipan.config.MinioConfig;
-import net.xdclass.dcloud_aipan.controller.req.FileBatchReq;
-import net.xdclass.dcloud_aipan.controller.req.FileUpdateReq;
-import net.xdclass.dcloud_aipan.controller.req.FileUploadReq;
-import net.xdclass.dcloud_aipan.controller.req.FolderCreateReq;
+import net.xdclass.dcloud_aipan.controller.req.*;
 import net.xdclass.dcloud_aipan.dto.AccountFileDTO;
 import net.xdclass.dcloud_aipan.dto.FolderTreeNodeDTO;
 import net.xdclass.dcloud_aipan.enums.BizCodeEnum;
@@ -18,8 +15,10 @@ import net.xdclass.dcloud_aipan.enums.FolderFlagEnum;
 import net.xdclass.dcloud_aipan.exception.BizException;
 import net.xdclass.dcloud_aipan.mapper.AccountFileMapper;
 import net.xdclass.dcloud_aipan.mapper.FileMapper;
+import net.xdclass.dcloud_aipan.mapper.StorageMapper;
 import net.xdclass.dcloud_aipan.model.AccountFileDO;
 import net.xdclass.dcloud_aipan.model.FileDO;
+import net.xdclass.dcloud_aipan.model.StorageDO;
 import net.xdclass.dcloud_aipan.service.AccountFileService;
 import net.xdclass.dcloud_aipan.util.CommonUtil;
 import net.xdclass.dcloud_aipan.util.SpringBeanUtil;
@@ -44,6 +43,9 @@ public class AccountFileServiceImpl implements AccountFileService {
     MinioConfig minioConfig;
     @Autowired
     private FileMapper fileMapper;
+
+    @Autowired
+    private StorageMapper storageMapper;
 
     /**
      * 获取文件列表接口
@@ -361,5 +363,29 @@ public class AccountFileServiceImpl implements AccountFileService {
                 throw new BizException(BizCodeEnum.FILE_NOT_EXISTS );
             }
         }
+    }
+
+
+    /**
+     * 批量删除文件
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void delBatch(FileDelReq req) {
+        // 步骤 1: 检查是否满足：文件 ID数量是否合法 2. 文件是否属于当前用户
+        List<AccountFileDO> accountFileDOList = checkFileIdLegal(req.getFileIds(), req.getAccountId());
+        // 步骤 2：判断文件是否是文件夹，文件夹的话需要递归获取里面子文件 ID，然后进行批量删除
+        List<AccountFileDO> storeAccountFileDOList = new ArrayList<>();
+        findAllAccountFileDOWithRecur(storeAccountFileDOList, accountFileDOList, false);
+        // 拿到全部文件 ID，含文件夹
+        List<Long> allFileIdList = storeAccountFileDOList.stream().map(AccountFileDO::getId).collect(Collectors.toList());
+        // 步骤 3: 需要更新账号存储空间
+        long allFileSize = storeAccountFileDOList.stream().filter(file -> file.getIsDir().equals(FolderFlagEnum.NO.getCode()))
+                .mapToLong(AccountFileDO::getFileSize).sum();
+
+        StorageDO storageDO = storageMapper.selectOne(new QueryWrapper<StorageDO>().eq("account_id", req.getAccountId()));
+        storageDO.setUsedSize(storageDO.getUsedSize() - allFileSize);
+        // 步骤 4：批量删除账号映射文件，考虑回收站如何设计
+        accountFileMapper.deleteBatchIds(allFileIdList);
     }
 }

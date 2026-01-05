@@ -1,9 +1,6 @@
 package net.xdclass.dcloud_aipan.controller;
 
-import net.xdclass.dcloud_aipan.controller.req.FileBatchReq;
-import net.xdclass.dcloud_aipan.controller.req.FileUpdateReq;
-import net.xdclass.dcloud_aipan.controller.req.FileUploadReq;
-import net.xdclass.dcloud_aipan.controller.req.FolderCreateReq;
+import net.xdclass.dcloud_aipan.controller.req.*;
 import net.xdclass.dcloud_aipan.dto.AccountFileDTO;
 import net.xdclass.dcloud_aipan.dto.FolderTreeNodeDTO;
 import net.xdclass.dcloud_aipan.interceptor.LoginInterceptor;
@@ -82,6 +79,16 @@ public class AccountFileController {
     public JsonData moveBatch(@RequestBody FileBatchReq req){
         req.setAccountId(LoginInterceptor.threadLocal.get().getId());
         accountFileService.moveBatch(req);
+        return JsonData.buildSuccess();
+    }
+
+    /**
+     * 文件批量删除
+     */
+    @PostMapping("del_batch")
+    public JsonData delBatch(@RequestBody FileDelReq req){
+        req.setAccountId(LoginInterceptor.threadLocal.get().getId());
+        accountFileService.delBatch(req);
         return JsonData.buildSuccess();
     }
 }
