@@ -179,12 +179,34 @@ public class AccountFileServiceImpl implements AccountFileService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void fileUpload(FileUploadReq req) {
-        // 1. 上传到存储引擎
-        String storeFileObjectKey = storeFile(req);
-        // 2. 保存文件信息
-        // 3. 保存账号和文件关系
-        setFileAndAccountFile(req, storeFileObjectKey);
 
+        boolean storeEnough = checkAndUpdateCapacity(req.getAccountId(), req.getFileSize());
+
+        if (storeEnough) {
+            // 1. 上传到存储引擎
+            String storeFileObjectKey = storeFile(req);
+            // 2. 保存文件信息
+            // 3. 保存账号和文件关系
+            setFileAndAccountFile(req, storeFileObjectKey);
+        } else {
+            throw new BizException(BizCodeEnum.FILE_STORAGE_NOT_ENOUGH);
+        }
+
+
+    }
+
+    private boolean checkAndUpdateCapacity(Long accountId, Long fileSize) {
+        StorageDO storageDO = storageMapper.selectOne(new QueryWrapper<StorageDO>().eq("account_id", accountId));
+
+        Long totalSize = storageDO.getTotalSize();
+
+        if (storageDO.getUsedSize() + fileSize <= totalSize) {
+            storageDO.setUsedSize(storageDO.getUsedSize() + fileSize);
+            storageMapper.updateById(storageDO);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -380,11 +402,15 @@ public class AccountFileServiceImpl implements AccountFileService {
         // 拿到全部文件 ID，含文件夹
         List<Long> allFileIdList = storeAccountFileDOList.stream().map(AccountFileDO::getId).collect(Collectors.toList());
         // 步骤 3: 需要更新账号存储空间
-        long allFileSize = storeAccountFileDOList.stream().filter(file -> file.getIsDir().equals(FolderFlagEnum.NO.getCode()))
+//        long allFileSize = storeAccountFileDOList.stream().filter(file -> file.getIsDir().equals(FolderFlagEnum.NO.getCode()))
+//                .mapToLong(AccountFileDO::getFileSize).sum();
+        long allFileSize = storeAccountFileDOList.stream()
+                .filter(file -> file.getIsDir().equals(FolderFlagEnum.NO.getCode()))
                 .mapToLong(AccountFileDO::getFileSize).sum();
 
         StorageDO storageDO = storageMapper.selectOne(new QueryWrapper<StorageDO>().eq("account_id", req.getAccountId()));
         storageDO.setUsedSize(storageDO.getUsedSize() - allFileSize);
+        storageMapper.updateById(storageDO);
         // 步骤 4：批量删除账号映射文件，考虑回收站如何设计
         accountFileMapper.deleteBatchIds(allFileIdList);
     }
