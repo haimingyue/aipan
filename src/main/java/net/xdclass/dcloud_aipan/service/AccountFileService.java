@@ -25,4 +25,6 @@ public interface AccountFileService {
     void moveBatch(FileBatchReq req);
 
     void delBatch(FileDelReq req);
+
+    void copyBatch(FileBatchReq req);
 }

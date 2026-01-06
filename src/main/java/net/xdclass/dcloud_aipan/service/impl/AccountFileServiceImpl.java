@@ -1,6 +1,7 @@
 package net.xdclass.dcloud_aipan.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,7 @@ import net.xdclass.dcloud_aipan.util.SpringBeanUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -413,5 +415,82 @@ public class AccountFileServiceImpl implements AccountFileService {
         storageMapper.updateById(storageDO);
         // 步骤 4：批量删除账号映射文件，考虑回收站如何设计
         accountFileMapper.deleteBatchIds(allFileIdList);
+    }
+
+    /**
+     * 1. 检查被转移的 ID 是否合法
+     * 2. 检查目标 ID 是否合法
+     * 3. 执行拷贝，递归查找【差异点，ID 是全新的】
+     * 4. 计算存储空间，是否足够
+     * 5. 存储相关结构
+     * @param req
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void copyBatch(FileBatchReq req) {
+        // 1. 检查被转移的 ID 是否合法
+        List<AccountFileDO> accountFileDOList = checkFileIdLegal(req.getFileIds(), req.getAccountId());
+        // 2. 检查目标 ID 是否合法
+        checkTargetParentIdLegal(req);
+        // 3. 执行拷贝，递归查找【差异点，ID 是全新的】
+        List<AccountFileDO> newAccountFileDO = findBatchCopyWithRecur(accountFileDOList, req.getTargetParentId());
+        // 4. 计算存储空间
+        long totalFileSize = newAccountFileDO.stream().filter(file -> file.getIsDir().equals(FolderFlagEnum.NO.getCode()))
+                .mapToLong(AccountFileDO::getFileSize).sum();
+        if (!checkAndUpdateCapacity(req.getAccountId(), totalFileSize)) {
+            throw new BizException(BizCodeEnum.FILE_STORAGE_NOT_ENOUGH);
+        }
+        accountFileMapper.insertFileBatch(newAccountFileDO);
+    }
+
+    private List<AccountFileDO> findBatchCopyWithRecur(List<AccountFileDO> accountFileDOList, Long targetParentId) {
+        List<AccountFileDO> newAccountFileDO = new ArrayList<>();
+
+        accountFileDOList.forEach(accountFileDO -> doCopyFileRecur(newAccountFileDO, accountFileDO, targetParentId));
+
+        return newAccountFileDO;
+    }
+
+    /**
+     * 递归处理，包括子文件夹
+     */
+    private void doCopyFileRecur(List<AccountFileDO> newAccountFileDO, AccountFileDO accountFileDO, Long targetParentId) {
+        // 保存旧的文件 id，方便查找子文件夹
+        Long oldAccountFileId = accountFileDO.getId();
+        // 创建新记录
+        accountFileDO.setId(IdUtil.getSnowflakeNextId());
+        accountFileDO.setParentId(targetParentId);
+        accountFileDO.setGmtModified(null);
+        accountFileDO.setGmtCreate(null);
+
+        // 处理重复文件名
+        processAccountFileDuplicate(accountFileDO);
+
+        // 纳入容器存储
+        newAccountFileDO.add(accountFileDO);
+
+        if (Objects.equals(accountFileDO.getIsDir(), FolderFlagEnum.YES.getCode())) {
+            // 继续获取子文件列表
+            List<AccountFileDO> childAccountFileDOList = findChildAccountFile(accountFileDO.getAccountId(), oldAccountFileId);
+            if (CollectionUtils.isEmpty(childAccountFileDOList)) {
+                return;
+            }
+            // 递归处理
+            childAccountFileDOList
+                    .forEach(childAccountFileDO -> doCopyFileRecur(newAccountFileDO, childAccountFileDO, accountFileDO.getId()));
+        }
+
+    }
+
+    /**
+     * 查找文件记录，查询下一级，不递归
+     * @param accountId
+     * @param parentId
+     * @return
+     */
+    private List<AccountFileDO> findChildAccountFile(Long accountId, Long parentId) {
+        return accountFileMapper.selectList(new QueryWrapper<AccountFileDO>()
+                .eq("account_id", accountId)
+                .eq("parent_id", parentId));
     }
 }

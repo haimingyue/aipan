@@ -91,4 +91,14 @@ public class AccountFileController {
         accountFileService.delBatch(req);
         return JsonData.buildSuccess();
     }
+
+    /**
+     * 文件复制
+     */
+    @PostMapping("copy_batch")
+    public JsonData copyBatch(@RequestBody FileBatchReq req){
+        req.setAccountId(LoginInterceptor.threadLocal.get().getId());
+        accountFileService.copyBatch(req);
+        return JsonData.buildSuccess();
+    }
 }
