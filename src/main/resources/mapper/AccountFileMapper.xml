@@ -25,7 +25,7 @@
     </sql>
 
     <!--    批量插入-->
-    <insert id="insertFileBatch" parameterType="java.util.list">
+    <insert id="insertFileBatch" parameterType="java.util.List">
         insert into account_file (id, account_id, is_dir, parent_id, file_id, file_name, file_type, file_suffix, file_size, del, del_time) values
         <foreach collection="newAccountFileDOList" item="item" separator=",">
             (#{item.id}, #{item.accountId}, #{item.isDir}, #{item.parentId}, #{item.fileId}, #{item.fileName}, #{item.fileType}, #{item.fileSuffix}, #{item.fileSize},
