@@ -253,11 +253,6 @@ public class AccountFileServiceImpl implements AccountFileService {
             throw new BizException(BizCodeEnum.FILE_BATCH_UPDATE_ERROR);
         }
 
-        /**
-         * 要操作的文件列表不能包括目标文件 ID
-         * 1. 查询批量操作的文件和文件夹，递归处理
-         * 2. 判断是否在里面
-         */
         List<AccountFileDO> prepareAccountFileDOS = accountFileMapper.selectList(new QueryWrapper<AccountFileDO>()
                 .eq("account_id", req.getFileIds())
                 .eq("account_id", req.getAccountId()));
@@ -423,7 +418,6 @@ public class AccountFileServiceImpl implements AccountFileService {
      * 3. 执行拷贝，递归查找【差异点，ID 是全新的】
      * 4. 计算存储空间，是否足够
      * 5. 存储相关结构
-     * @param req
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -441,6 +435,37 @@ public class AccountFileServiceImpl implements AccountFileService {
             throw new BizException(BizCodeEnum.FILE_STORAGE_NOT_ENOUGH);
         }
         accountFileMapper.insertFileBatch(newAccountFileDO);
+    }
+
+    /**
+     * 文件秒传
+     * 1. 检查文件是否存在
+     * 2. 检查空间是否足够
+     * 3. 建立关系
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean secondUpload(FileSecondUploadReq req) {
+        FileDO fileDO = fileMapper.selectOne(new QueryWrapper<FileDO>().eq("identifier", req.getIdentifier()));
+
+        if (fileDO != null && checkAndUpdateCapacity(req.getAccountId(), fileDO.getFileSize())) {
+            AccountFileDTO accountFileDTO = new AccountFileDTO();
+            accountFileDTO.setAccountId(req.getAccountId());
+            accountFileDTO.setFileId(fileDO.getId());
+            accountFileDTO.setParentId(req.getParentId());
+            accountFileDTO.setFileName(req.getFilename());
+            // size
+            accountFileDTO.setFileSize(fileDO.getFileSize());
+            // del
+            accountFileDTO.setDel(false);
+            // dir
+            accountFileDTO.setIsDir(FolderFlagEnum.NO.getCode());
+
+            // 保存关联关系
+            saveAccountFile(accountFileDTO);
+            return true;
+        }
+        return false;
     }
 
     private List<AccountFileDO> findBatchCopyWithRecur(List<AccountFileDO> accountFileDOList, Long targetParentId) {
@@ -484,9 +509,6 @@ public class AccountFileServiceImpl implements AccountFileService {
 
     /**
      * 查找文件记录，查询下一级，不递归
-     * @param accountId
-     * @param parentId
-     * @return
      */
     private List<AccountFileDO> findChildAccountFile(Long accountId, Long parentId) {
         return accountFileMapper.selectList(new QueryWrapper<AccountFileDO>()

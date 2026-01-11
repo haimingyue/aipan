@@ -101,4 +101,16 @@ public class AccountFileController {
         accountFileService.copyBatch(req);
         return JsonData.buildSuccess();
     }
+
+    /**
+     * 文件秒传接口
+     * true 就是文件秒传成功
+     * false 就会失败，需要重新调用上传接口
+     */
+    @PostMapping("second_upload")
+    public JsonData secondUpload(@RequestBody FileSecondUploadReq req){
+        req.setAccountId(LoginInterceptor.threadLocal.get().getId());
+        Boolean flag =  accountFileService.secondUpload(req);
+        return JsonData.buildSuccess(flag);
+    }
 }

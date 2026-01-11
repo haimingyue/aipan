@@ -27,4 +27,6 @@ public interface AccountFileService {
     void delBatch(FileDelReq req);
 
     void copyBatch(FileBatchReq req);
+
+    Boolean secondUpload(FileSecondUploadReq req);
 }
