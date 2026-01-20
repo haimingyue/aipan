@@ -5,7 +5,6 @@ import cn.hutool.core.date.DateUtil;
 import com.amazonaws.HttpMethod;
 import com.amazonaws.services.s3.model.*;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import net.xdclass.dcloud_aipan.component.MinIoFileStoreEngine;
 import net.xdclass.dcloud_aipan.component.StoreEngine;
 import net.xdclass.dcloud_aipan.config.MinioConfig;
 import net.xdclass.dcloud_aipan.controller.req.FileChunkInitTaskReq;
@@ -20,7 +19,6 @@ import net.xdclass.dcloud_aipan.model.FileChunkDO;
 import net.xdclass.dcloud_aipan.model.StorageDO;
 import net.xdclass.dcloud_aipan.service.AccountFileService;
 import net.xdclass.dcloud_aipan.service.FileChunkService;
-import net.xdclass.dcloud_aipan.service.FileService;
 import net.xdclass.dcloud_aipan.util.CommonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -57,8 +55,6 @@ public class FileChunkServiceImpl implements FileChunkService {
      * 初始化分片上传
      * 创建上传任务实体并设置相关属性
      * 将任务插入数据库，构建并返回任务信息 DTO
-     * @param req
-     * @return
      */
     @Override
     public FileChunkDTO initFileChunkTask(FileChunkInitTaskReq req) {

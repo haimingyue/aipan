@@ -2,7 +2,6 @@ package net.xdclass.dcloud_aipan.service;
 
 import net.xdclass.dcloud_aipan.controller.req.*;
 import net.xdclass.dcloud_aipan.dto.AccountFileDTO;
-import net.xdclass.dcloud_aipan.dto.FileChunkDTO;
 import net.xdclass.dcloud_aipan.dto.FolderTreeNodeDTO;
 
 import java.util.List;
