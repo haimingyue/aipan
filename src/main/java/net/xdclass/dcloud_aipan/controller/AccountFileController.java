@@ -125,7 +125,7 @@ public class AccountFileController {
     public JsonData initFileChunkTask(@RequestBody FileChunkInitTaskReq req) {
         req.setAccountId(LoginInterceptor.threadLocal.get().getId());
         FileChunkDTO fileChunkDTO = fileChunkService.initFileChunkTask(req);
-        return JsonData.buildSuccess();
+        return JsonData.buildSuccess(fileChunkDTO);
     }
 
     /**
@@ -146,7 +146,18 @@ public class AccountFileController {
     public JsonData mergeFileChunk(@RequestBody FileChunkMergeReq req) {
         // 获取登录 id
         Long accountId = LoginInterceptor.threadLocal.get().getId();
+        req.setAccountId(accountId);
         fileChunkService.mergeFileChunk(req);
         return JsonData.buildSuccess();
+    }
+
+    /**
+     * 4. 查询分片进度
+     */
+    @GetMapping("chunk_upload_progress/{identifier}")
+    public JsonData chunkUploadProgress(@PathVariable("identifier") String identifier) {
+        Long accountId = LoginInterceptor.threadLocal.get().getId();
+        FileChunkDTO fileChunkDTO = fileChunkService.listFileChunk(accountId, identifier);
+        return JsonData.buildSuccess(fileChunkDTO);
     }
 }

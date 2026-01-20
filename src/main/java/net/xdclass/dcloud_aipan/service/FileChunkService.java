@@ -19,4 +19,9 @@ public interface FileChunkService {
      * 合并分片
      */
     void mergeFileChunk(FileChunkMergeReq req);
+
+    /**
+     * 分片上传进度
+     */
+    FileChunkDTO listFileChunk(Long accountId, String identifier);
 }
