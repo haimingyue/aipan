@@ -2,9 +2,11 @@ package net.xdclass.dcloud_aipan.controller;
 
 import net.xdclass.dcloud_aipan.controller.req.*;
 import net.xdclass.dcloud_aipan.dto.AccountFileDTO;
+import net.xdclass.dcloud_aipan.dto.FileChunkDTO;
 import net.xdclass.dcloud_aipan.dto.FolderTreeNodeDTO;
 import net.xdclass.dcloud_aipan.interceptor.LoginInterceptor;
 import net.xdclass.dcloud_aipan.service.AccountFileService;
+import net.xdclass.dcloud_aipan.service.FileChunkService;
 import net.xdclass.dcloud_aipan.util.JsonData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +19,8 @@ public class AccountFileController {
 
     @Autowired
     private AccountFileService accountFileService;
+    @Autowired
+    private FileChunkService fileChunkService;
 
     /**
      * 查询文件列表
@@ -112,5 +116,37 @@ public class AccountFileController {
         req.setAccountId(LoginInterceptor.threadLocal.get().getId());
         Boolean flag =  accountFileService.secondUpload(req);
         return JsonData.buildSuccess(flag);
+    }
+
+    /**
+     * 1. 创建分片上传任务
+     */
+    @PostMapping("init_upload")
+    public JsonData initFileChunkTask(@RequestBody FileChunkInitTaskReq req) {
+        req.setAccountId(LoginInterceptor.threadLocal.get().getId());
+        FileChunkDTO fileChunkDTO = fileChunkService.initFileChunkTask(req);
+        return JsonData.buildSuccess();
+    }
+
+    /**
+     * 2. 获取分片上传地址，返回 minio 临时签名地址
+     */
+    @GetMapping("get_file_chunk_upload_url/{identifier}/{partNumber}")
+    public JsonData getFileChunkUploadUrl(@PathVariable("identifier") String identifier,
+                                          @PathVariable("partNumber") Integer partNumber) {
+        Long accountId = LoginInterceptor.threadLocal.get().getId();
+        String url = fileChunkService.genPreSignUploadUrl(accountId, identifier, partNumber);
+        return JsonData.buildSuccess(url);
+    }
+
+    /**
+     * 3. 合并分片
+     */
+    @PostMapping("merge_file_chunk")
+    public JsonData mergeFileChunk(@RequestBody FileChunkMergeReq req) {
+        // 获取登录 id
+        Long accountId = LoginInterceptor.threadLocal.get().getId();
+        fileChunkService.mergeFileChunk(req);
+        return JsonData.buildSuccess();
     }
 }

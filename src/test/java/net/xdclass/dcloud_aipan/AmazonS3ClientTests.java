@@ -12,8 +12,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.*;
 import java.net.URL;
-import java.util.Date;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @SpringBootTest
 @Slf4j
@@ -152,5 +152,143 @@ class AmazonS3ClientTests {
 
 		// 输出预签名url
 		System.out.println(preSignedUrl.toString());
+	}
+
+//	==================================================大文件上传==================================================================
+
+	/**
+	 * 1. 初始化大文件上传任务，获取 uoloadId
+	 * 如果初始化的时候有uoloadId，则说明是续传，不用重新生成uoloadId
+	 */
+
+	@Test
+	public void testInitMultipartUploadTask() {
+
+		String bucketName = "ai-pan";
+		String objectKey = "aa/bb/cc/666.txt";
+
+		ObjectMetadata metadata = new ObjectMetadata();
+		metadata.setContentType("text/plain");
+
+		// 初始化分片上传请求
+		InitiateMultipartUploadRequest initRequest =
+				new InitiateMultipartUploadRequest(bucketName, objectKey, metadata);
+
+		// 初始化分片上传任务
+		InitiateMultipartUploadResult uploadResult = amazonS3Client.initiateMultipartUpload(initRequest);
+		String uploadId = uploadResult.getUploadId();
+		log.info("初始化分片上传任务成功，uploadId: {}", uploadId);
+	}
+
+	/**
+	 * 2. 测试初始化，并生成多个预签名 URL，返回给前端
+	 */
+	@Test
+	public void testGenePreSignedUrls() {
+
+		String bucketName = "ai-pan";
+		String objectKey = "aa/bb/cc/666.txt";
+		// 分片数量，这里配置 4 个分片
+		int chunkCount = 4;
+		String uploadId = "NTRiOWIwOTEtN2Q1My00MmZhLTgyYWMtMjM5N2VhNjE4MGU4LjU4NTViMDU2LTdlMzYtNGNlNi1hOWFiLTAwMTBkNmNiZTM2MXgxNzY4MzQ0ODI4MTQ5OTk2MDkz";
+
+		// 存储预签名的地址
+		List<String> preSignedUrls = new ArrayList<>(chunkCount);
+
+		// 遍历每个分片，生成预签名地址
+		for (int i = 1; i <= chunkCount; i++) {
+			// 生成预签名URL，配置过期时间，1小时
+			Date expireDate = DateUtil.offsetHour(new Date(), 1);
+			// 创建生成预签名URL的请求，并且指定方法为PUT
+
+			GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucketName, objectKey)
+					.withExpiration(expireDate).withMethod(HttpMethod.PUT);
+
+			// 添加上传 ID 和分片编号作为请求参数
+			request.addRequestParameter("uploadId", uploadId);
+			request.addRequestParameter("partNumber", String.valueOf(i));
+
+			// 请求签名 URL
+			URL url = amazonS3Client.generatePresignedUrl(request);
+			preSignedUrls.add(url.toString());
+			log.info("分片 {} 的预签名URL：{}", i, url);
+		}
+	}
+
+	/**
+	 * 测试合并分片
+	 */
+	@Test
+	public void testMergeChunks() {
+		String bucketName = "ai-pan";
+		String objectKey = "aa/bb/cc/666.txt";
+		// 分片数量，这里配置 4 个分片
+		int chunkCount = 4;
+		String uploadId = "NTRiOWIwOTEtN2Q1My00MmZhLTgyYWMtMjM5N2VhNjE4MGU4LjU4NTViMDU2LTdlMzYtNGNlNi1hOWFiLTAwMTBkNmNiZTM2MXgxNzY4MzQ0ODI4MTQ5OTk2MDkz";
+
+		// 创建一个列出分片请求对象
+		ListPartsRequest listPartsRequest = new ListPartsRequest(bucketName, objectKey, uploadId);
+		PartListing partListing = amazonS3Client.listParts(listPartsRequest);
+		List<PartSummary> partList = partListing.getParts();
+
+		// 检查分片和预期的是否一致
+		if (partList.size() != chunkCount) {
+			// 已经上传的分片和记录中的不一样，不能合并
+			throw new RuntimeException("分片数量不一致");
+		}
+
+		// 创建完成分片上传请求对象，进行合并
+		CompleteMultipartUploadRequest completeMultipartUploadRequest
+				= new CompleteMultipartUploadRequest()
+				.withBucketName(bucketName)
+				.withKey(objectKey)
+				.withUploadId(uploadId)
+				.withPartETags(
+						partList.stream()
+								.map(partSummary -> new PartETag(partSummary.getPartNumber(), partSummary.getETag()))
+								 .collect(Collectors.toList()));
+
+		CompleteMultipartUploadResult result = amazonS3Client.completeMultipartUpload(completeMultipartUploadRequest);
+		log.info("合并分片成功，返回结果：{}", result);
+	}
+
+	/**
+	 * 上传进度验证
+	 */
+	@Test
+	public void testGetUploadProgress() {
+		String bucketName = "ai-pan";
+		String objectKey = "aa/bb/cc/666.txt";
+		// 分片数量，这里配置 4 个分片
+		int chunkCount = 4;
+		String uploadId = "NTRiOWIwOTEtN2Q1My00MmZhLTgyYWMtMjM5N2VhNjE4MGU4LjU4NTViMDU2LTdlMzYtNGNlNi1hOWFiLTAwMTBkNmNiZTM2MXgxNzY4MzQ0ODI4MTQ5OTk2MDkz";
+
+		// 检查对应的桶里面是否存在对应的对象
+		boolean doesObjectExist = amazonS3Client.doesObjectExist(bucketName, objectKey);
+
+		if (!doesObjectExist) {
+			ListPartsRequest listPartsRequest = new ListPartsRequest(bucketName, objectKey, uploadId);
+			PartListing partListing = amazonS3Client.listParts(listPartsRequest);
+			List<PartSummary> partList = partListing.getParts();
+
+			// 创建一个结果，用于存储上传状态和分片列表
+			Map<String, Object> result = new HashMap<>(2);
+			result.put("finished", false);
+			result.put("existPartList", partList);
+
+			// 前端可以通过finished判断是否要调用 merge
+			log.info("上传进度：{}", result);
+
+			// 遍历每个分片的信息
+			for (PartSummary partSummary : partList) {
+				System.out.println(
+						"分片编号：" + partSummary.getPartNumber() +
+								"，ETag：" + partSummary.getETag() +
+								"，大小：" + partSummary.getSize() +
+								"，上传时间：" + partSummary.getLastModified()
+				);
+			}
+
+		}
 	}
 }

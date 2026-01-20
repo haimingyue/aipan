@@ -18,5 +18,5 @@ public class MinioConfig {
 
 
     // 预签名的URL 过期时间
-    private Long PRE_SIGN_URL_EXPIRE_TIME = 60 * 10 * 1000L;
+    private Long preSignUrlExpireTime = 60 * 10 * 1000L;
 }

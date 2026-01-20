@@ -298,7 +298,8 @@ public class AccountFileServiceImpl implements AccountFileService {
         return accountFileDOList;
     }
 
-    private void setFileAndAccountFile(FileUploadReq req, String storeFileObjectKey) {
+    @Override
+    public void setFileAndAccountFile(FileUploadReq req, String storeFileObjectKey) {
         FileDO fileDO = saveFile(req, storeFileObjectKey);
         AccountFileDTO accountFileDTO = AccountFileDTO.builder()
                 .accountId(req.getAccountId())

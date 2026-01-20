@@ -2,6 +2,7 @@ package net.xdclass.dcloud_aipan.service;
 
 import net.xdclass.dcloud_aipan.controller.req.*;
 import net.xdclass.dcloud_aipan.dto.AccountFileDTO;
+import net.xdclass.dcloud_aipan.dto.FileChunkDTO;
 import net.xdclass.dcloud_aipan.dto.FolderTreeNodeDTO;
 
 import java.util.List;
@@ -29,4 +30,6 @@ public interface AccountFileService {
     void copyBatch(FileBatchReq req);
 
     Boolean secondUpload(FileSecondUploadReq req);
+
+    void setFileAndAccountFile(FileUploadReq req, String storeFileObjectKey);
 }
