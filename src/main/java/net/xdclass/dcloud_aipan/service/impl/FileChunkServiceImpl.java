@@ -60,7 +60,7 @@ public class FileChunkServiceImpl implements FileChunkService {
     public FileChunkDTO initFileChunkTask(FileChunkInitTaskReq req) {
 
 
-        StorageDO storageDO = storageMapper.selectOne(new QueryWrapper<>(new StorageDO()).eq("accountId", req.getAccountId()));
+        StorageDO storageDO = storageMapper.selectOne(new QueryWrapper<>(new StorageDO()).eq("account_id", req.getAccountId()));
 
         if (storageDO.getUsedSize() + req.getTotalSize() > storageDO.getTotalSize()) {
             throw new BizException(BizCodeEnum.FILE_STORAGE_NOT_ENOUGH);
@@ -101,7 +101,7 @@ public class FileChunkServiceImpl implements FileChunkService {
     @Override
     public String genPreSignUploadUrl(Long accountId, String identifier, Integer partNumber) {
         FileChunkDO task = fileChunkMapper.selectOne(new QueryWrapper<FileChunkDO>()
-                .eq("accountId", accountId)
+                .eq("account_id", accountId)
                 .eq("identifier", identifier));
         if (task == null) {
             throw new BizException(BizCodeEnum.FILE_CHUNK_TASK_NOT_EXISTS);
@@ -131,7 +131,7 @@ public class FileChunkServiceImpl implements FileChunkService {
     public void mergeFileChunk(FileChunkMergeReq  req) {
         // 获取任务和分片列表，检查是否足够合并
         FileChunkDO task = fileChunkMapper.selectOne(new QueryWrapper<FileChunkDO>()
-                .eq("accountId", req.getAccountId())
+                .eq("account_id", req.getAccountId())
                 .eq("identifier", req.getIdentifier()));
 
         if (task == null) {
@@ -146,7 +146,7 @@ public class FileChunkServiceImpl implements FileChunkService {
 
         long totalSize = parts.stream().map(PartSummary::getSize).mapToLong( Long::intValue).sum();
         // 如果一样，检查更新存储空间
-        StorageDO storageDO = storageMapper.selectOne(new QueryWrapper<StorageDO>().eq("accountId", req.getAccountId()));
+        StorageDO storageDO = storageMapper.selectOne(new QueryWrapper<StorageDO>().eq("account_id", req.getAccountId()));
         if (storageDO.getUsedSize() + totalSize > storageDO.getTotalSize()) {
             throw new BizException(BizCodeEnum.FILE_STORAGE_NOT_ENOUGH);
         }
@@ -177,7 +177,7 @@ public class FileChunkServiceImpl implements FileChunkService {
     public FileChunkDTO listFileChunk(Long accountId, String identifier) {
         // 1. 查询任务是否存在？
         FileChunkDO task = fileChunkMapper.selectOne(new QueryWrapper<FileChunkDO>()
-                .eq("accountId", accountId)
+                .eq("account_id", accountId)
                 .eq("identifier", identifier));
         if (task == null) {
             throw new BizException(BizCodeEnum.FILE_CHUNK_TASK_NOT_EXISTS);

@@ -1,5 +1,5 @@
-package net.xdclass.dcloud_aipan.service;
-
-public interface FileService {
-
-}
+//package net.xdclass.dcloud_aipan.service;
+//
+//public interface FileService {
+//
+//}
