@@ -129,14 +129,13 @@ public class JwtUtil {
     public static String geneShareJWT(  Object claimValue) {
 
         // 创建 JWT token
-        String compact = Jwts.builder()
+        return Jwts.builder()
                 .subject(SHARE_SUBJECT)
                 .claim(CLAIM_SHARE_KEY, claimValue)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + SHARE_TOKEN_EXPIRE))
                 .signWith(KEY, ALGORITHM)  // 直接使用KEY即可
                 .compact();
-        return compact;
     }
 
     /**
