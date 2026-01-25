@@ -287,7 +287,7 @@ public class AccountFileServiceImpl implements AccountFileService {
     /**
      * 检查文件 id 是否合法
      */
-    private List<AccountFileDO> checkFileIdLegal(List<Long> fileIds, Long accountId) {
+    public List<AccountFileDO> checkFileIdLegal(List<Long> fileIds, Long accountId) {
         List<AccountFileDO> accountFileDOList = accountFileMapper.selectList(new QueryWrapper<AccountFileDO>()
                 .eq("account_id", accountId)
                 .in("id", fileIds));

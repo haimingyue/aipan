@@ -3,6 +3,7 @@ package net.xdclass.dcloud_aipan.service;
 import net.xdclass.dcloud_aipan.controller.req.*;
 import net.xdclass.dcloud_aipan.dto.AccountFileDTO;
 import net.xdclass.dcloud_aipan.dto.FolderTreeNodeDTO;
+import net.xdclass.dcloud_aipan.model.AccountFileDO;
 
 import java.util.List;
 
@@ -31,4 +32,6 @@ public interface AccountFileService {
     Boolean secondUpload(FileSecondUploadReq req);
 
     void setFileAndAccountFile(FileUploadReq req, String storeFileObjectKey);
+
+    List<AccountFileDO> checkFileIdLegal(List<Long> fileIds, Long accountId);
 }

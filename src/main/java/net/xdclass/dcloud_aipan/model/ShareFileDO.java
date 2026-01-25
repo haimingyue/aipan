@@ -7,8 +7,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.util.Date;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.Accessors;
 
 /**
  * <p>
@@ -22,6 +22,9 @@ import lombok.Setter;
 @Setter
 @TableName("share_file")
 @Schema(name = "ShareFileDO", description = "文件分享表")
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class ShareFileDO implements Serializable {
 
     private static final long serialVersionUID = 1L;

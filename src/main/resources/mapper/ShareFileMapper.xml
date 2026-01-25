@@ -17,4 +17,11 @@
         id, share_id, account_file_id, account_id, gmt_create, gmt_modified
     </sql>
 
+    <insert id="insertBatch" parameterType="java.util.List">
+        insert into share_file (id, share_id, account_file_id, account_id) values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.id},#{item.shareId}, #{item.accountFileId}, #{item.accountId})
+        </foreach>
+    </insert>
+
 </mapper>
