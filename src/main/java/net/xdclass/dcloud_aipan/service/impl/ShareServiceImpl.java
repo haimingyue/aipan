@@ -51,8 +51,6 @@ public class ShareServiceImpl implements ShareService  {
 
     /**
      * 检查分享文件
-     * @param req
-     * @return
      */
     @Override
     @Transactional(rollbackFor = Exception.class)

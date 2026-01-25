@@ -36,6 +36,6 @@ public class ShareController {
 
         ShareDTO shareDTO = shareService.createShare(req);
 
-        return JsonData.buildSuccess();
+        return JsonData.buildSuccess(shareDTO);
     }
 }
