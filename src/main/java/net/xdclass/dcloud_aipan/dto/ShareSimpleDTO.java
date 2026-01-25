@@ -3,23 +3,16 @@ package net.xdclass.dcloud_aipan.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.util.Date;
 
-/**
- * <p>
- * 用户分享表
- * </p>
- *
- * @author SimoonQian,
- * @since 2025-11-03
- */
 @Getter
 @Setter
-@Schema(name = "ShareDTO", description = "用户分享对象")
-public class ShareDTO implements Serializable {
-
+@Schema(name = "ShareSimpleDTO", description = "分享链接简单对象")
+@Accessors(chain = true)
+public class ShareSimpleDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Schema(description = "分享id")
@@ -43,16 +36,11 @@ public class ShareDTO implements Serializable {
     @Schema(description = "分享链接地址")
     private String shareUrl;
 
-    @Schema(description = "分享提取码")
-    private String shareCode;
+    /**
+     * 不需要code 的时候使用
+     */
+    private String shareToken;
 
-    @Schema(description = "分享状态  used正常, expired已失效,  cancled取消")
-    private String shareStatus;
-
-    @Schema(description = "分享创建人")
-    private Long accountId;
-
-    @Schema(description = "创建时间")
-    private Date gmtCreate;
+    private ShareAccountDTO shareAccountDTO;
 
 }

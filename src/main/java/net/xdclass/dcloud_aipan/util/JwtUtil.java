@@ -18,13 +18,13 @@ public class JwtUtil {
 
 
     //分享主题
-//    private static final String SHARE_SUBJECT = "XDCLASS_SHARE";
-//
-//    //分享ID
-//    public static final String CLAIM_SHARE_KEY = "SHARE_ID";
-//
-//    //分享token过期时间，1小时
-//    private static final long SHARE_TOKEN_EXPIRE = 1000 * 60 * 60;
+    private static final String SHARE_SUBJECT = "XDCLASS_SHARE";
+
+    //分享ID
+    public static final String CLAIM_SHARE_KEY = "SHARE_ID";
+
+    //分享token过期时间，1小时
+    private static final long SHARE_TOKEN_EXPIRE = 1000 * 60 * 60;
 
 
     //注意这个密钥长度需要足够长, 推荐：JWT的密钥，从环境变量中获取
@@ -126,48 +126,48 @@ public class JwtUtil {
     /**
      * 创建分享的令牌
      */
-//    public static String geneShareJWT(  Object claimValue) {
-//
-//        // 创建 JWT token
-//        String compact = Jwts.builder()
-//                .subject(SHARE_SUBJECT)
-//                .claim(CLAIM_SHARE_KEY, claimValue)
-//                .issuedAt(new Date())
-//                .expiration(new Date(System.currentTimeMillis() + SHARE_TOKEN_EXPIRE))
-//                .signWith(KEY, ALGORITHM)  // 直接使用KEY即可
-//                .compact();
-//        return compact;
-//    }
+    public static String geneShareJWT(  Object claimValue) {
+
+        // 创建 JWT token
+        String compact = Jwts.builder()
+                .subject(SHARE_SUBJECT)
+                .claim(CLAIM_SHARE_KEY, claimValue)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + SHARE_TOKEN_EXPIRE))
+                .signWith(KEY, ALGORITHM)  // 直接使用KEY即可
+                .compact();
+        return compact;
+    }
 
     /**
      * 创建分享的令牌
      */
-//    public static Claims checkShareJWT(String token) {
-//        try {
-//            log.debug("开始校验 Share JWT: {}", token);
-//            // 校验 Token 是否为空
-//            if (token == null || token.trim().isEmpty()) {
-//                log.error("Share Token 不能为空");
-//                return null;
-//            }
-//            token = token.trim();
-//            // 解析 JWT
-//            Claims payload = Jwts.parser()
-//                    .verifyWith(KEY)  //设置签名的密钥, 使用相同的 KEY
-//                    .build()
-//                    .parseSignedClaims(token).getPayload();
-//
-//            log.info("Share JWT 解密成功，Claims: {}", payload);
-//            return payload;
-//        } catch (IllegalArgumentException e) {
-//            log.error("JWT 校验失败: {}", e.getMessage(), e);
-//        } catch (io.jsonwebtoken.security.SignatureException e) {
-//            log.error("JWT 签名验证失败: {}", e.getMessage(), e);
-//        } catch (io.jsonwebtoken.ExpiredJwtException e) {
-//            log.error("JWT 已过期: {}", e.getMessage(), e);
-//        } catch (Exception e) {
-//            log.error("JWT 解密失败: {}", e.getMessage(), e);
-//        }
-//        return null;
-//    }
+    public static Claims checkShareJWT(String token) {
+        try {
+            log.debug("开始校验 Share JWT: {}", token);
+            // 校验 Token 是否为空
+            if (token == null || token.trim().isEmpty()) {
+                log.error("Share Token 不能为空");
+                return null;
+            }
+            token = token.trim();
+            // 解析 JWT
+            Claims payload = Jwts.parser()
+                    .verifyWith(KEY)  //设置签名的密钥, 使用相同的 KEY
+                    .build()
+                    .parseSignedClaims(token).getPayload();
+
+            log.info("Share JWT 解密成功，Claims: {}", payload);
+            return payload;
+        } catch (IllegalArgumentException e) {
+            log.error("JWT 校验失败: {}", e.getMessage(), e);
+        } catch (io.jsonwebtoken.security.SignatureException e) {
+            log.error("JWT 签名验证失败: {}", e.getMessage(), e);
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            log.error("JWT 已过期: {}", e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("JWT 解密失败: {}", e.getMessage(), e);
+        }
+        return null;
+    }
 }

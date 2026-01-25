@@ -2,37 +2,50 @@ package net.xdclass.dcloud_aipan.service.impl;
 
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SecureDigestAlgorithm;
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.dcloud_aipan.config.AccountConfig;
 import net.xdclass.dcloud_aipan.controller.req.ShareCancelReq;
+import net.xdclass.dcloud_aipan.controller.req.ShareCheckReq;
 import net.xdclass.dcloud_aipan.controller.req.ShareCreateReq;
 import net.xdclass.dcloud_aipan.dto.AccountDTO;
+import net.xdclass.dcloud_aipan.dto.ShareAccountDTO;
 import net.xdclass.dcloud_aipan.dto.ShareDTO;
+import net.xdclass.dcloud_aipan.dto.ShareSimpleDTO;
 import net.xdclass.dcloud_aipan.enums.BizCodeEnum;
 import net.xdclass.dcloud_aipan.enums.ShareDayEnum;
 import net.xdclass.dcloud_aipan.enums.ShareStatusEnum;
 import net.xdclass.dcloud_aipan.enums.ShareTypeEnum;
 import net.xdclass.dcloud_aipan.exception.BizException;
 import net.xdclass.dcloud_aipan.interceptor.LoginInterceptor;
+import net.xdclass.dcloud_aipan.mapper.AccountMapper;
 import net.xdclass.dcloud_aipan.mapper.ShareFileMapper;
 import net.xdclass.dcloud_aipan.mapper.ShareMapper;
+import net.xdclass.dcloud_aipan.model.AccountDO;
 import net.xdclass.dcloud_aipan.model.ShareDO;
 import net.xdclass.dcloud_aipan.model.ShareFileDO;
 import net.xdclass.dcloud_aipan.service.AccountFileService;
 import net.xdclass.dcloud_aipan.service.ShareService;
+import net.xdclass.dcloud_aipan.util.JwtUtil;
 import net.xdclass.dcloud_aipan.util.SpringBeanUtil;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.crypto.SecretKey;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
 
 @Service
 @Slf4j
-public class ShareServiceImpl implements ShareService  {
+public class ShareServiceImpl implements ShareService {
+
 
     @Autowired
     private ShareMapper shareMapper;
@@ -40,7 +53,11 @@ public class ShareServiceImpl implements ShareService  {
     @Autowired
     private ShareFileMapper shareFileMapper;
 
+    @Autowired
     private AccountFileService accountFileService;
+
+    @Autowired
+    private AccountMapper accountMapper;
 
     @Override
     public List<ShareDTO> listShare() {
@@ -128,5 +145,75 @@ public class ShareServiceImpl implements ShareService  {
 
         // 删除分享详情
         shareFileMapper.delete(new QueryWrapper<ShareFileDO>().in("share_id", req.getShareIds()));
+    }
+
+    @Override
+    public ShareSimpleDTO simpleDetail(Long shareId) {
+        // 查看分享状态
+        ShareDO shareDO = checkShareStatus(shareId);
+        ShareSimpleDTO shareSimpleDTO = SpringBeanUtil.copyProperties(shareDO, ShareSimpleDTO.class);
+
+        // 查询分享者信息
+        ShareAccountDTO shareAccountDTO = getShareAccount(shareDO.getAccountId());
+        shareSimpleDTO.setShareAccountDTO(shareAccountDTO);
+
+        // 判断是否需要校验码
+        if (ShareTypeEnum.NEED_CODE.name().equalsIgnoreCase(shareDO.getShareType())) {
+            String shareToken = JwtUtil.geneShareJWT(shareDO.getId());
+            shareSimpleDTO.setShareToken(shareToken);
+        }
+
+        return shareSimpleDTO;
+    }
+
+    @Override
+    public String checkShareCode(ShareCheckReq shareCheckReq) {
+
+        ShareDO shareDO = shareMapper.selectOne(new QueryWrapper<ShareDO>()
+                .eq("id", shareCheckReq.getShareId())
+                .eq("share_code", shareCheckReq.getShareCode())
+                .eq("share_status", ShareStatusEnum.USED.name()));
+
+        if (shareDO != null) {
+            // 判断是否过期
+            if (shareDO.getShareEndTime().getTime() < System.currentTimeMillis()) {
+                return JwtUtil.geneShareJWT(shareDO.getId());
+            } else {
+                log.error("分享已失效 {}", shareDO.getId());
+                throw new BizException(BizCodeEnum.SHARE_EXPIRED);
+            }
+        }
+
+        return "";
+    }
+
+    /**
+     * 获取分享者信息
+     */
+    private ShareAccountDTO getShareAccount(Long accountId) {
+        if (accountId != null) {
+            AccountDO accountDO = accountMapper.selectById(accountId);
+            if (accountDO != null) {
+                return SpringBeanUtil.copyProperties(accountDO, ShareAccountDTO.class);
+            }
+        }
+        return null;
+    }
+
+    private ShareDO checkShareStatus(Long shareId) {
+        ShareDO shareDO = shareMapper.selectById(shareId);
+        if (shareDO == null) {
+            log.error("分享不存在");
+            throw new BizException(BizCodeEnum.SHARE_NOT_EXIST);
+        }
+        if (ShareStatusEnum.EXPIRED.name().equalsIgnoreCase(shareDO.getShareStatus())) {
+            log.error("分享已失效");
+            throw new BizException(BizCodeEnum.SHARE_EXPIRED);
+        }
+        if (ShareStatusEnum.CANCELED.name().equalsIgnoreCase(shareDO.getShareStatus())) {
+            log.error("分享已取消");
+            throw new BizException(BizCodeEnum.SHARE_CANCELED);
+        }
+        return shareDO;
     }
 }

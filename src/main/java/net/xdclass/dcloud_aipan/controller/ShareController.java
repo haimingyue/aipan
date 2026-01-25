@@ -1,8 +1,11 @@
 package net.xdclass.dcloud_aipan.controller;
 
 import net.xdclass.dcloud_aipan.controller.req.ShareCancelReq;
+import net.xdclass.dcloud_aipan.controller.req.ShareCheckReq;
 import net.xdclass.dcloud_aipan.controller.req.ShareCreateReq;
 import net.xdclass.dcloud_aipan.dto.ShareDTO;
+import net.xdclass.dcloud_aipan.dto.ShareSimpleDTO;
+import net.xdclass.dcloud_aipan.enums.BizCodeEnum;
 import net.xdclass.dcloud_aipan.interceptor.LoginInterceptor;
 import net.xdclass.dcloud_aipan.service.ShareService;
 import net.xdclass.dcloud_aipan.util.JsonData;
@@ -53,5 +56,33 @@ public class ShareController {
 
         return JsonData.buildSuccess();
 
+    }
+
+    /**
+     * 访问分享接口
+     * 情况 1：如果不需要校验码，则返回 token
+     * 情况 2: 如果需要校验码，则返回校验码，调用对应的接口，再返回 token
+     */
+    @GetMapping("visit")
+    public JsonData visit(@RequestParam(value = "shareId") Long shareId) {
+
+        ShareSimpleDTO shareSimpleDTO = shareService.simpleDetail(shareId);
+
+        return JsonData.buildSuccess(shareSimpleDTO);
+    }
+
+    /**
+     * 校验分享码，返回 token
+     */
+    @PostMapping("check_share_code")
+    public JsonData checkShareCode(@RequestBody ShareCheckReq shareCheckReq) {
+
+        String shareToken = shareService.checkShareCode(shareCheckReq);
+
+        if (shareToken == null) {
+            return JsonData.buildResult(BizCodeEnum.SHARE_NOT_EXIST);
+        }
+
+        return JsonData.buildSuccess(shareToken);
     }
 }
