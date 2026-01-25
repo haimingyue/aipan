@@ -1,5 +1,6 @@
 package net.xdclass.dcloud_aipan.controller;
 
+import net.xdclass.dcloud_aipan.controller.req.ShareCancelReq;
 import net.xdclass.dcloud_aipan.controller.req.ShareCreateReq;
 import net.xdclass.dcloud_aipan.dto.ShareDTO;
 import net.xdclass.dcloud_aipan.interceptor.LoginInterceptor;
@@ -37,5 +38,20 @@ public class ShareController {
         ShareDTO shareDTO = shareService.createShare(req);
 
         return JsonData.buildSuccess(shareDTO);
+    }
+
+    /**
+     * 取消分享
+     */
+
+    @PostMapping("cancel")
+    public JsonData cancel(@RequestBody ShareCancelReq req) {
+
+        req.setAccountId(LoginInterceptor.threadLocal.get().getId());
+
+        shareService.cancelShare(req);
+
+        return JsonData.buildSuccess();
+
     }
 }

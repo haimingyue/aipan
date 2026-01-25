@@ -225,16 +225,25 @@ public class AccountFileServiceImpl implements AccountFileService {
         // 2. 检查目标文件夹id 是否合法, 包括子文件夹
         checkTargetParentIdLegal(req);
 
+        accountFileDOList.forEach(accountFileDO -> {
+            accountFileDO.setParentId(req.getTargetParentId());
+        });
+
         // 3. 批量移动文件到目标文件夹(重复名称处理)
         accountFileDOList.forEach(this::processAccountFileDuplicate);
 
         // 4. 更新文件或者文件夹 parentId 为 目标文件夹id
-        UpdateWrapper<AccountFileDO> updateWrapper = new UpdateWrapper<>();
-        updateWrapper.in("id", req.getFileIds())
-                .set("parent_id", req.getTargetParentId());
-        int updateCount = accountFileMapper.update(null, updateWrapper);
-        if (updateCount != accountFileDOList.size()) {
-            throw new BizException(BizCodeEnum.FILE_BATCH_UPDATE_ERROR);
+//        UpdateWrapper<AccountFileDO> updateWrapper = new UpdateWrapper<>();
+//        updateWrapper.in("id", req.getFileIds())
+//                .set("parent_id", req.getTargetParentId());
+//        int updateCount = accountFileMapper.update(null, updateWrapper);
+//        if (updateCount != accountFileDOList.size()) {
+//            throw new BizException(BizCodeEnum.FILE_BATCH_UPDATE_ERROR);
+//        }
+        for (AccountFileDO accountFileDO: accountFileDOList) {
+            if (accountFileMapper.updateById(accountFileDO) < 0) {
+                throw new BizException(BizCodeEnum.FILE_BATCH_UPDATE_ERROR);
+            }
         }
     }
 

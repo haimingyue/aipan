@@ -4,12 +4,15 @@ import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.dcloud_aipan.config.AccountConfig;
+import net.xdclass.dcloud_aipan.controller.req.ShareCancelReq;
 import net.xdclass.dcloud_aipan.controller.req.ShareCreateReq;
 import net.xdclass.dcloud_aipan.dto.AccountDTO;
 import net.xdclass.dcloud_aipan.dto.ShareDTO;
+import net.xdclass.dcloud_aipan.enums.BizCodeEnum;
 import net.xdclass.dcloud_aipan.enums.ShareDayEnum;
 import net.xdclass.dcloud_aipan.enums.ShareStatusEnum;
 import net.xdclass.dcloud_aipan.enums.ShareTypeEnum;
+import net.xdclass.dcloud_aipan.exception.BizException;
 import net.xdclass.dcloud_aipan.interceptor.LoginInterceptor;
 import net.xdclass.dcloud_aipan.mapper.ShareFileMapper;
 import net.xdclass.dcloud_aipan.mapper.ShareMapper;
@@ -108,5 +111,22 @@ public class ShareServiceImpl implements ShareService  {
         shareFileMapper.insertBatch(shareFileDOList);
 
         return SpringBeanUtil.copyProperties(shareDO, ShareDTO.class);
+    }
+
+    @Override
+    public void cancelShare(ShareCancelReq req) {
+        List<ShareDO> shareDOList = shareMapper.selectList(new QueryWrapper<ShareDO>()
+                .eq("account_id", req.getAccountId())
+                .in("id", req.getShareIds()));
+
+        if (shareDOList.size() != req.getShareIds().size()) {
+            log.error("分享不存在");
+            throw new BizException(BizCodeEnum.SHARE_NOT_EXIST);
+        }
+        // 删除分享链接
+        shareMapper.deleteBatchIds(req.getShareIds());
+
+        // 删除分享详情
+        shareFileMapper.delete(new QueryWrapper<ShareFileDO>().in("share_id", req.getShareIds()));
     }
 }

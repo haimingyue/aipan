@@ -1,5 +1,6 @@
 package net.xdclass.dcloud_aipan.service;
 
+import net.xdclass.dcloud_aipan.controller.req.ShareCancelReq;
 import net.xdclass.dcloud_aipan.controller.req.ShareCreateReq;
 import net.xdclass.dcloud_aipan.dto.ShareDTO;
 
@@ -9,4 +10,6 @@ public interface ShareService {
     List<ShareDTO> listShare();
 
     ShareDTO createShare(ShareCreateReq req);
+
+    void cancelShare(ShareCancelReq req);
 }
