@@ -35,3 +35,6 @@ minio:
   access-secret: d6905295
   bucket-name: ai-pan
   avatar-bucket-name: avatar
+
+ai:
+  key: <KEY>
