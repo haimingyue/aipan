@@ -1,5 +1,7 @@
 package net.xdclass.dcloud_aipan.controller;
 
+import net.xdclass.dcloud_aipan.annotation.ShareCodeCheck;
+import net.xdclass.dcloud_aipan.aspect.ShareCodeAspect;
 import net.xdclass.dcloud_aipan.controller.req.ShareCancelReq;
 import net.xdclass.dcloud_aipan.controller.req.ShareCheckReq;
 import net.xdclass.dcloud_aipan.controller.req.ShareCreateReq;
@@ -90,11 +92,10 @@ public class ShareController {
     /**
      * 查看分享详情接口
      */
+    @ShareCodeCheck
     public JsonData detail() {
 
-        Long shareId = 1L;
-
-        ShareDetailDTO shareDetailDTO = shareService.detail(shareId);
+        ShareDetailDTO shareDetailDTO = shareService.detail(ShareCodeAspect.get());
 
         return JsonData.buildSuccess(shareDetailDTO);
     }
