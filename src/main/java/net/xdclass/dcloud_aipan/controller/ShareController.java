@@ -5,6 +5,8 @@ import net.xdclass.dcloud_aipan.aspect.ShareCodeAspect;
 import net.xdclass.dcloud_aipan.controller.req.ShareCancelReq;
 import net.xdclass.dcloud_aipan.controller.req.ShareCheckReq;
 import net.xdclass.dcloud_aipan.controller.req.ShareCreateReq;
+import net.xdclass.dcloud_aipan.controller.req.ShareFileQueryReq;
+import net.xdclass.dcloud_aipan.dto.AccountFileDTO;
 import net.xdclass.dcloud_aipan.dto.ShareDTO;
 import net.xdclass.dcloud_aipan.dto.ShareDetailDTO;
 import net.xdclass.dcloud_aipan.dto.ShareSimpleDTO;
@@ -92,11 +94,23 @@ public class ShareController {
     /**
      * 查看分享详情接口
      */
+    @GetMapping("detail")
     @ShareCodeCheck
     public JsonData detail() {
 
         ShareDetailDTO shareDetailDTO = shareService.detail(ShareCodeAspect.get());
 
         return JsonData.buildSuccess(shareDetailDTO);
+    }
+
+    /**
+     * 查看某个分享文件夹下的文件列表
+     */
+    @PostMapping("list_share_file")
+    @ShareCodeCheck
+    public JsonData listShareFile(@RequestBody ShareFileQueryReq req) {
+        req.setShareId(ShareCodeAspect.get());
+        List<AccountFileDTO> list = shareService.listShareFile(req);
+        return JsonData.buildSuccess(list);
     }
 }

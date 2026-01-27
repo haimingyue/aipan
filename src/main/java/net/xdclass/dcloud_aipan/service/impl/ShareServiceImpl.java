@@ -2,11 +2,13 @@ package net.xdclass.dcloud_aipan.service.impl;
 
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.dcloud_aipan.config.AccountConfig;
 import net.xdclass.dcloud_aipan.controller.req.ShareCancelReq;
 import net.xdclass.dcloud_aipan.controller.req.ShareCheckReq;
 import net.xdclass.dcloud_aipan.controller.req.ShareCreateReq;
+import net.xdclass.dcloud_aipan.controller.req.ShareFileQueryReq;
 import net.xdclass.dcloud_aipan.dto.*;
 import net.xdclass.dcloud_aipan.enums.BizCodeEnum;
 import net.xdclass.dcloud_aipan.enums.ShareDayEnum;
@@ -34,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -194,7 +197,7 @@ public class ShareServiceImpl implements ShareService {
         ShareDO shareDO = checkShareStatus(shareId);
         ShareDetailDTO shareDetailDTO = SpringBeanUtil.copyProperties(shareDO, ShareDetailDTO.class);
 
-        List<AccountFileDO> accountFileDOList = getShareInfo(shareId);
+        List<AccountFileDO> accountFileDOList = getShareFileInfo(shareId);
         List<AccountFileDTO> accountFileDTOS = SpringBeanUtil.copyProperties(accountFileDOList, AccountFileDTO.class);
         shareDetailDTO.setFileDTOList(accountFileDTOS);
 
@@ -204,7 +207,53 @@ public class ShareServiceImpl implements ShareService {
         return shareDetailDTO;
     }
 
-    private List<AccountFileDO> getShareInfo(Long shareId) {
+    @Override
+    public List<AccountFileDTO> listShareFile(ShareFileQueryReq req) {
+
+        ShareDO shareDO = checkShareStatus(req.getShareId());
+
+        // 查询分享 id 是否在分享列表中
+        List<AccountFileDO> accountFileDOList = checkShareFileIdOnStatus(shareDO.getId(),  List.of(req.getParentId()));
+
+        List<AccountFileDTO> accountFileDTOList = SpringBeanUtil.copyProperties(accountFileDOList, AccountFileDTO.class);
+
+        //分组后获取某个文件夹下面所有的子文件夹
+        Map<Long, List<AccountFileDTO>> fileListMap = accountFileDTOList.stream()
+                .collect(Collectors.groupingBy(AccountFileDTO::getParentId));
+
+        //根据父文件夹ID获取子文件夹列表
+        List<AccountFileDTO> childFileList = fileListMap.get(req.getParentId());
+
+        if(CollectionUtils.isEmpty(childFileList)){
+            return List.of();
+        }
+
+        return childFileList;
+
+    }
+
+    private List<AccountFileDO> checkShareFileIdOnStatus(Long shareId, List<Long> fileIdList) {
+        //需要获取分享文件列表的全部文件夹和子文件内容
+        List<AccountFileDO>  shareFileInfoList = getShareFileInfo(shareId);
+        List<AccountFileDO> allAccountFileDOList = new ArrayList<>();
+        //获取全部文件，递归
+        accountFileService.findAllAccountFileDOWithRecur(allAccountFileDOList, shareFileInfoList, false);
+
+        if(CollectionUtils.isEmpty(allAccountFileDOList)){
+            return List.of();
+        }
+
+        //把分享的对象文件的全部文件夹放到集合里面，判断目标文件集合是否都在里面
+        Set<Long> allFileIdSet = allAccountFileDOList.stream().map(AccountFileDO::getId).collect(Collectors.toSet());
+        if(!allFileIdSet.containsAll(fileIdList)){
+            log.error("目标文件ID列表 不再 分享的文件列表中,{}",fileIdList);
+            throw new BizException(BizCodeEnum.SHARE_FILE_ILLEGAL);
+        }
+        return allAccountFileDOList;
+    }
+
+
+    private List<AccountFileDO> getShareFileInfo(Long shareId) {
         // 查找分享文件列表
 //        List<Long> shareFileIdList = getShareFileIdList(shareId);
         List<ShareFileDO> shareFileDOS = shareFileMapper.selectList(new QueryWrapper<ShareFileDO>().select("account_file_id").eq("share_id", shareId));

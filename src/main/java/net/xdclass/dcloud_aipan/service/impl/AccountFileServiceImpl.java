@@ -3,7 +3,6 @@ package net.xdclass.dcloud_aipan.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import lombok.extern.slf4j.Slf4j;
 import net.xdclass.dcloud_aipan.component.StoreEngine;
 import net.xdclass.dcloud_aipan.config.MinioConfig;
@@ -276,7 +275,7 @@ public class AccountFileServiceImpl implements AccountFileService {
         }
     }
 
-    private void findAllAccountFileDOWithRecur(List<AccountFileDO> allAccountFileDOList, List<AccountFileDO> prepareAccountFileDOS, boolean onlyFolder) {
+    public void findAllAccountFileDOWithRecur(List<AccountFileDO> allAccountFileDOList, List<AccountFileDO> prepareAccountFileDOS, boolean onlyFolder) {
         for (AccountFileDO accountFileDO : prepareAccountFileDOS) {
             if (Objects.equals(accountFileDO.getIsDir(), FolderFlagEnum.YES.getCode())) {
                 List<AccountFileDO> childAccountFileDOList = accountFileMapper.selectList(new QueryWrapper<AccountFileDO>()

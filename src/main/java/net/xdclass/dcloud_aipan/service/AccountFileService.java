@@ -34,4 +34,6 @@ public interface AccountFileService {
     void setFileAndAccountFile(FileUploadReq req, String storeFileObjectKey);
 
     List<AccountFileDO> checkFileIdLegal(List<Long> fileIds, Long accountId);
+
+    void findAllAccountFileDOWithRecur(List<AccountFileDO> allAccountFileDOList, List<AccountFileDO> prepareAccountFileDOS, boolean onlyFolder);
 }

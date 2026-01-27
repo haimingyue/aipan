@@ -3,6 +3,8 @@ package net.xdclass.dcloud_aipan.service;
 import net.xdclass.dcloud_aipan.controller.req.ShareCancelReq;
 import net.xdclass.dcloud_aipan.controller.req.ShareCheckReq;
 import net.xdclass.dcloud_aipan.controller.req.ShareCreateReq;
+import net.xdclass.dcloud_aipan.controller.req.ShareFileQueryReq;
+import net.xdclass.dcloud_aipan.dto.AccountFileDTO;
 import net.xdclass.dcloud_aipan.dto.ShareDTO;
 import net.xdclass.dcloud_aipan.dto.ShareDetailDTO;
 import net.xdclass.dcloud_aipan.dto.ShareSimpleDTO;
@@ -21,4 +23,6 @@ public interface ShareService {
     String checkShareCode(ShareCheckReq shareCheckReq);
 
     ShareDetailDTO detail(Long shareId);
+
+    List<AccountFileDTO> listShareFile(ShareFileQueryReq req);
 }
