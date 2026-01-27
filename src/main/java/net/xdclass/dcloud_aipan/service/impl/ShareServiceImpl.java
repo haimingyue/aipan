@@ -7,20 +7,19 @@ import net.xdclass.dcloud_aipan.config.AccountConfig;
 import net.xdclass.dcloud_aipan.controller.req.ShareCancelReq;
 import net.xdclass.dcloud_aipan.controller.req.ShareCheckReq;
 import net.xdclass.dcloud_aipan.controller.req.ShareCreateReq;
-import net.xdclass.dcloud_aipan.dto.AccountDTO;
-import net.xdclass.dcloud_aipan.dto.ShareAccountDTO;
-import net.xdclass.dcloud_aipan.dto.ShareDTO;
-import net.xdclass.dcloud_aipan.dto.ShareSimpleDTO;
+import net.xdclass.dcloud_aipan.dto.*;
 import net.xdclass.dcloud_aipan.enums.BizCodeEnum;
 import net.xdclass.dcloud_aipan.enums.ShareDayEnum;
 import net.xdclass.dcloud_aipan.enums.ShareStatusEnum;
 import net.xdclass.dcloud_aipan.enums.ShareTypeEnum;
 import net.xdclass.dcloud_aipan.exception.BizException;
 import net.xdclass.dcloud_aipan.interceptor.LoginInterceptor;
+import net.xdclass.dcloud_aipan.mapper.AccountFileMapper;
 import net.xdclass.dcloud_aipan.mapper.AccountMapper;
 import net.xdclass.dcloud_aipan.mapper.ShareFileMapper;
 import net.xdclass.dcloud_aipan.mapper.ShareMapper;
 import net.xdclass.dcloud_aipan.model.AccountDO;
+import net.xdclass.dcloud_aipan.model.AccountFileDO;
 import net.xdclass.dcloud_aipan.model.ShareDO;
 import net.xdclass.dcloud_aipan.model.ShareFileDO;
 import net.xdclass.dcloud_aipan.service.AccountFileService;
@@ -52,6 +51,10 @@ public class ShareServiceImpl implements ShareService {
 
     @Autowired
     private AccountMapper accountMapper;
+
+    @Autowired
+    private AccountFileMapper accountFileMapper;
+
 
     @Override
     public List<ShareDTO> listShare() {
@@ -179,6 +182,35 @@ public class ShareServiceImpl implements ShareService {
         }
 
         return "";
+    }
+
+    /**
+     * 1. 查询分享记录实体
+     * 2. 检查分享状态
+     * 3. 查询分享文件信息
+     */
+    @Override
+    public ShareDetailDTO detail(Long shareId) {
+        ShareDO shareDO = checkShareStatus(shareId);
+        ShareDetailDTO shareDetailDTO = SpringBeanUtil.copyProperties(shareDO, ShareDetailDTO.class);
+
+        List<AccountFileDO> accountFileDOList = getShareInfo(shareId);
+        List<AccountFileDTO> accountFileDTOS = SpringBeanUtil.copyProperties(accountFileDOList, AccountFileDTO.class);
+        shareDetailDTO.setFileDTOList(accountFileDTOS);
+
+        // 查询分享者信息
+        ShareAccountDTO shareAccountDTO = getShareAccount(shareDO.getAccountId());
+        shareDetailDTO.setShareAccountDTO(shareAccountDTO);
+        return shareDetailDTO;
+    }
+
+    private List<AccountFileDO> getShareInfo(Long shareId) {
+        // 查找分享文件列表
+//        List<Long> shareFileIdList = getShareFileIdList(shareId);
+        List<ShareFileDO> shareFileDOS = shareFileMapper.selectList(new QueryWrapper<ShareFileDO>().select("account_file_id").eq("share_id", shareId));
+        List<Long> shareFileIdList = shareFileDOS.stream().map(ShareFileDO::getAccountFileId).toList();
+
+        return accountFileMapper.selectBatchIds(shareFileIdList);
     }
 
     /**

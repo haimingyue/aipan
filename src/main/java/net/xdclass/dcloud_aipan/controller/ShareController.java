@@ -4,6 +4,7 @@ import net.xdclass.dcloud_aipan.controller.req.ShareCancelReq;
 import net.xdclass.dcloud_aipan.controller.req.ShareCheckReq;
 import net.xdclass.dcloud_aipan.controller.req.ShareCreateReq;
 import net.xdclass.dcloud_aipan.dto.ShareDTO;
+import net.xdclass.dcloud_aipan.dto.ShareDetailDTO;
 import net.xdclass.dcloud_aipan.dto.ShareSimpleDTO;
 import net.xdclass.dcloud_aipan.enums.BizCodeEnum;
 import net.xdclass.dcloud_aipan.interceptor.LoginInterceptor;
@@ -84,5 +85,17 @@ public class ShareController {
         }
 
         return JsonData.buildSuccess(shareToken);
+    }
+
+    /**
+     * 查看分享详情接口
+     */
+    public JsonData detail() {
+
+        Long shareId = 1L;
+
+        ShareDetailDTO shareDetailDTO = shareService.detail(shareId);
+
+        return JsonData.buildSuccess(shareDetailDTO);
     }
 }
