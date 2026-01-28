@@ -36,4 +36,8 @@ public interface AccountFileService {
     List<AccountFileDO> checkFileIdLegal(List<Long> fileIds, Long accountId);
 
     void findAllAccountFileDOWithRecur(List<AccountFileDO> allAccountFileDOList, List<AccountFileDO> prepareAccountFileDOS, boolean onlyFolder);
+
+    List<AccountFileDO> findBatchCopyWithRecur(List<AccountFileDO> accountFileDOList, Long targetParentId);
+
+    boolean checkAndUpdateCapacity(Long accountId, Long fileSize);
 }

@@ -2,10 +2,7 @@ package net.xdclass.dcloud_aipan.controller;
 
 import net.xdclass.dcloud_aipan.annotation.ShareCodeCheck;
 import net.xdclass.dcloud_aipan.aspect.ShareCodeAspect;
-import net.xdclass.dcloud_aipan.controller.req.ShareCancelReq;
-import net.xdclass.dcloud_aipan.controller.req.ShareCheckReq;
-import net.xdclass.dcloud_aipan.controller.req.ShareCreateReq;
-import net.xdclass.dcloud_aipan.controller.req.ShareFileQueryReq;
+import net.xdclass.dcloud_aipan.controller.req.*;
 import net.xdclass.dcloud_aipan.dto.AccountFileDTO;
 import net.xdclass.dcloud_aipan.dto.ShareDTO;
 import net.xdclass.dcloud_aipan.dto.ShareDetailDTO;
@@ -112,5 +109,23 @@ public class ShareController {
         req.setShareId(ShareCodeAspect.get());
         List<AccountFileDTO> list = shareService.listShareFile(req);
         return JsonData.buildSuccess(list);
+    }
+
+    /**
+     * * 分享链接是否状态准确
+     * * 转存的文件是否是分享链接里面的文件
+     * * 目标文件夹是否是当前用户的
+     * * 获取转存的文件
+     * * 保存需要转存的文件列表（递归子文件）
+     * * 同步更新所有文件的accountId为当前用户的id
+     * * 计算存储空间大小，检查是否足够
+     * * 更新关联对象信息，存储文件映射关系
+     */
+    @PostMapping("transfer")
+    @ShareCodeCheck
+    public JsonData transfer(@RequestBody ShareFileTransferReq req) {
+        req.setShareId(ShareCodeAspect.get());
+        shareService.transferShareFile(req);
+        return JsonData.buildSuccess();
     }
 }
