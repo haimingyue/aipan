@@ -154,8 +154,8 @@ public class ShareServiceImpl implements ShareService {
         ShareAccountDTO shareAccountDTO = getShareAccount(shareDO.getAccountId());
         shareSimpleDTO.setShareAccountDTO(shareAccountDTO);
 
-        // 判断是否需要校验码
-        if (ShareTypeEnum.NEED_CODE.name().equalsIgnoreCase(shareDO.getShareType())) {
+        // 不需要校验码时直接返回 token，方便前端访问详情/列表/转存；需要校验码时需先调用 check_share_code 验证后再获取 token
+        if (ShareTypeEnum.NO_CODE.name().equalsIgnoreCase(shareDO.getShareType())) {
             String shareToken = JwtUtil.geneShareJWT(shareDO.getId());
             shareSimpleDTO.setShareToken(shareToken);
         }
@@ -238,12 +238,23 @@ public class ShareServiceImpl implements ShareService {
         //转存的文件是否是分享链接里面的文件
         checkInShareFiles(req.getFileIds(),req.getShareId());
 
-        //目标文件夹是否是当前用户的
+        // 获取当前登录用户信息
+        AccountDTO currentAccount = LoginInterceptor.threadLocal.get();
+        if (currentAccount == null || currentAccount.getId() == null) {
+            log.error("当前用户信息缺失，无法进行转存操作");
+            throw new BizException(BizCodeEnum.ACCOUNT_UNLOGIN);
+        }
+        
+        //目标文件夹是否存在且属于当前用户
         AccountFileDO currentAccountDO = accountFileMapper.selectOne(new QueryWrapper<AccountFileDO>()
-                .eq("id", req.getParentId()).eq("account_id", req.getAccountId()));
+                .eq("id", req.getParentId()).eq("account_id", currentAccount.getId()));
         if(currentAccountDO == null){
-            log.error("目标文件夹不是当前用户的,{}",req);
-            throw new BizException(BizCodeEnum.FILE_NOT_EXISTS);
+            log.error("目标文件夹不存在或不是当前用户的, parentId:{}, accountId:{}", req.getParentId(), currentAccount.getId());
+            throw new BizException(BizCodeEnum.FILE_TARGET_PARENT_ILLEGAL);
+        }
+        if(currentAccountDO.getIsDir() != null && currentAccountDO.getIsDir() != 1){
+            log.error("目标不是文件夹, parentId:{}", req.getParentId());
+            throw new BizException(BizCodeEnum.FILE_TARGET_PARENT_ILLEGAL);
         }
 
         //获取转存的文件
@@ -253,11 +264,11 @@ public class ShareServiceImpl implements ShareService {
 
         //同步更新所有文件的accountId为当前用户的id
         batchTransferFileList.forEach(file -> {
-            file.setAccountId(req.getAccountId());
+            file.setAccountId(currentAccount.getId());
         });
 
         //计算存储空间大小，检查是否足够
-        if(!accountFileService.checkAndUpdateCapacity(req.getAccountId(),batchTransferFileList.stream()
+        if(!accountFileService.checkAndUpdateCapacity(currentAccount.getId(),batchTransferFileList.stream()
                 .map(accountFileDO -> accountFileDO.getFileSize() == null ? 0 : accountFileDO.getFileSize())
                 .mapToLong(Long::valueOf).sum())){
             throw new BizException(BizCodeEnum.FILE_STORAGE_NOT_ENOUGH);
@@ -346,7 +357,7 @@ public class ShareServiceImpl implements ShareService {
             throw new BizException(BizCodeEnum.SHARE_CANCELED);
         }
         // 判断分享是否过期
-        if (shareDO.getShareEndTime().getTime() < System.currentTimeMillis()) {
+        if (shareDO.getShareEndTime().before(new Date())) {
             log.error("分享已失效");
             throw new BizException(BizCodeEnum.SHARE_EXPIRED);
         }

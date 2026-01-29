@@ -3,9 +3,13 @@ package net.xdclass.dcloud_aipan.controller.req;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Schema(name = "AccountLoginReq", description = "账号登录请求参数")
 public class AccountLoginReq {
     /**

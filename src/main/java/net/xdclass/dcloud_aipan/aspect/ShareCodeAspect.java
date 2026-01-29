@@ -43,7 +43,17 @@ public class ShareCodeAspect {
     @Around("pointCutShareCheckCode(shareCodeCheck)")
     public Object around(ProceedingJoinPoint joinPoint,ShareCodeCheck shareCodeCheck) throws Throwable {
         HttpServletRequest request = ((ServletRequestAttributes) (RequestContextHolder.getRequestAttributes())).getRequest();
+        // 支持 query 与 header，以及 share-token / shareToken 两种参数名，兼容前端不同传参方式
         String shareToken = request.getParameter("share-token");
+        if (StringUtils.isBlank(shareToken)) {
+            shareToken = request.getParameter("shareToken");
+        }
+        if (StringUtils.isBlank(shareToken)) {
+            shareToken = request.getHeader("share-token");
+        }
+        if (StringUtils.isBlank(shareToken)) {
+            shareToken = request.getHeader("shareToken");
+        }
 
         if (StringUtils.isBlank(shareToken)) {
             throw new BizException(BizCodeEnum.SHARE_CODE_ILLEGAL);
