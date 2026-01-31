@@ -1,6 +1,5 @@
 package net.xdclass.dcloud_aipan.mapper;
 
-import net.xdclass.dcloud_aipan.dto.AccountFileDTO;
 import net.xdclass.dcloud_aipan.model.AccountFileDO;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
@@ -23,4 +22,8 @@ public interface AccountFileMapper extends BaseMapper<AccountFileDO> {
      * 查询被删除的文件
      */
     List<AccountFileDO> selectRecycleFiles(@Param("accountId") Long accountId, @Param("fileIdList") List<Long> fileIdList);
+
+    List<AccountFileDO> selectRecycleChildFiles(@Param("accountId") Long accountId, @Param("parentId") Long parentId);
+
+    void deleteRecycleFiles(List<Long> recycleFileIds);
 }

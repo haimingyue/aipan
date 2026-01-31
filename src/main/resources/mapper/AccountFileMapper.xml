@@ -47,4 +47,20 @@
         </if>
     </select>
 
+    <select id="selectRecycleChildFiles" resultType="net.xdclass.dcloud_aipan.model.AccountFileDO">
+        select
+        *
+        from account_file
+        where parent_id = #{parentId}
+        and del = 1
+        and account_id = #{accountId}
+    </select>
+
+    <delete id="deleteRecycleFiles">
+        delete from account_file where del=1 id in
+        <foreach item="item" collection="recycleFileIds" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </delete>
+
 </mapper>
