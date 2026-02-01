@@ -40,4 +40,6 @@ public interface AccountFileService {
     List<AccountFileDO> findBatchCopyWithRecur(List<AccountFileDO> accountFileDOList, Long targetParentId);
 
     boolean checkAndUpdateCapacity(Long accountId, Long fileSize);
+
+    Long processAccountFileDuplicate(AccountFileDO accountFileDO);
 }

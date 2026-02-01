@@ -2,13 +2,14 @@ package net.xdclass.dcloud_aipan.service.impl;
 
 
 import net.xdclass.dcloud_aipan.controller.req.RecycleDeleteReq;
+import net.xdclass.dcloud_aipan.controller.req.RecycleRestoreReq;
 import net.xdclass.dcloud_aipan.dto.AccountFileDTO;
 import net.xdclass.dcloud_aipan.enums.BizCodeEnum;
 import net.xdclass.dcloud_aipan.enums.FolderFlagEnum;
 import net.xdclass.dcloud_aipan.exception.BizException;
 import net.xdclass.dcloud_aipan.mapper.AccountFileMapper;
 import net.xdclass.dcloud_aipan.model.AccountFileDO;
-import net.xdclass.dcloud_aipan.service.AccountService;
+import net.xdclass.dcloud_aipan.service.AccountFileService;
 import net.xdclass.dcloud_aipan.service.RecycleService;
 import net.xdclass.dcloud_aipan.util.SpringBeanUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,13 +21,13 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
-public class RecycleServiceImpl implements RecycleService  {
+public class RecycleServiceImpl implements RecycleService {
 
     @Autowired
     private AccountFileMapper accountFileMapper;
 
     @Autowired
-    private AccountService accountService;
+    private AccountFileService accountFileService;
 
     @Override
     public List<AccountFileDTO> listRecycleFile(Long accountId) {
@@ -69,6 +70,49 @@ public class RecycleServiceImpl implements RecycleService  {
         //批量删除回收站文件
         accountFileMapper.deleteRecycleFiles(recycleFileIds);
 
+
+    }
+
+    /**
+     * 还原回收站文件
+     * 检查是否满足：文件 ID 是否合法
+     * 还原前的父文件和当前文件夹是否有重复名称的文件和文件夹
+     * 判断文件是否是文件夹，文件夹的话需要递归获取里面的子文件 ID，才可以进行批量还原
+     * 检查工件是否足够
+     * 批量还原文件
+     */
+    @Override
+    public void restore(RecycleRestoreReq req) {
+        // 检查是否满足：文件 ID 是否合法
+        List<AccountFileDO> accountFileDOList = accountFileMapper.selectRecycleFiles(req.getAccountId(), req.getFileIds());
+        if (accountFileDOList.size() != req.getFileIds().size()) {
+            throw new BizException(BizCodeEnum.FILE_RECYCLE_ILLEGAL);
+        }
+
+        // 还原前的父文件和当前文件夹是否有重复名称的文件和文件夹
+        accountFileDOList.forEach(accountFileDO ->  {
+            Long selectCount = accountFileService.processAccountFileDuplicate(accountFileDO);
+
+            if (selectCount > 0) {
+                accountFileMapper.updateRecycleFileById(accountFileDO.getId(), accountFileDO.getFileName());
+            }
+        });
+
+        List<AccountFileDO> allAccountAllFileDOList = new ArrayList<>();
+        findAllAccountFileDOWithRecur(allAccountAllFileDOList, accountFileDOList, false);
+        List<Long> allFileIds = allAccountAllFileDOList.stream().map(AccountFileDO::getId).toList();
+
+        // 检查空间是否足够
+        if (!accountFileService.checkAndUpdateCapacity(req.getAccountId(),
+                allAccountAllFileDOList.stream().map(accountFileDO ->
+                    accountFileDO.getFileSize() == null ? 0 : accountFileDO.getFileSize()
+                ).mapToLong(Long::valueOf).sum()
+        )) {
+            throw new BizException(BizCodeEnum.FILE_STORAGE_NOT_ENOUGH);
+        }
+
+        // 批量还原文件
+        accountFileMapper.restoreFiles(allFileIds);
 
     }
 

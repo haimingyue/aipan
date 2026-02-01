@@ -63,4 +63,20 @@
         </foreach>
     </delete>
 
+    <update id="updateRecycleFileById">
+        update account_file
+        set file_name = #{fileName}
+        where id = #{id}
+        and del = 1
+    </update>
+
+    <update id="restoreFiles" parameterType="java.util.List">
+        update account_file
+        set del = 0
+        where id in
+        <foreach item="item" collection="allFileIds" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </update>
+
 </mapper>

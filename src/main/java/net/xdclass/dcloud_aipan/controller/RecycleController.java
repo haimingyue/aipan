@@ -1,6 +1,7 @@
 package net.xdclass.dcloud_aipan.controller;
 
 import net.xdclass.dcloud_aipan.controller.req.RecycleDeleteReq;
+import net.xdclass.dcloud_aipan.controller.req.RecycleRestoreReq;
 import net.xdclass.dcloud_aipan.dto.AccountFileDTO;
 import net.xdclass.dcloud_aipan.interceptor.LoginInterceptor;
 import net.xdclass.dcloud_aipan.service.RecycleService;
@@ -34,6 +35,16 @@ public class RecycleController {
     public JsonData delete(@RequestBody RecycleDeleteReq req){
         req.setAccountId(LoginInterceptor.threadLocal.get().getId());
         recycleService.delete(req);
+        return JsonData.buildSuccess();
+    }
+
+    /**
+     * 还原回收站文件
+     */
+    @PostMapping("restore")
+    public JsonData restore(@RequestBody RecycleRestoreReq req){
+        req.setAccountId(LoginInterceptor.threadLocal.get().getId());
+        recycleService.restore(req);
         return JsonData.buildSuccess();
     }
 }

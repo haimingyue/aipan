@@ -26,4 +26,8 @@ public interface AccountFileMapper extends BaseMapper<AccountFileDO> {
     List<AccountFileDO> selectRecycleChildFiles(@Param("accountId") Long accountId, @Param("parentId") Long parentId);
 
     void deleteRecycleFiles(List<Long> recycleFileIds);
+
+    boolean updateRecycleFileById(@Param("id") Long id, @Param("fileName") String fileName);
+
+    void restoreFiles(@Param("allFileIds") List<Long> allFileIds);
 }

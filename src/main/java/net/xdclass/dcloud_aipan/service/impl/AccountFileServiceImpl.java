@@ -229,21 +229,20 @@ public class AccountFileServiceImpl implements AccountFileService {
         });
 
         // 3. 批量移动文件到目标文件夹(重复名称处理)
-        accountFileDOList.forEach(this::processAccountFileDuplicate);
-
-        // 4. 更新文件或者文件夹 parentId 为 目标文件夹id
-//        UpdateWrapper<AccountFileDO> updateWrapper = new UpdateWrapper<>();
-//        updateWrapper.in("id", req.getFileIds())
-//                .set("parent_id", req.getTargetParentId());
-//        int updateCount = accountFileMapper.update(null, updateWrapper);
-//        if (updateCount != accountFileDOList.size()) {
-//            throw new BizException(BizCodeEnum.FILE_BATCH_UPDATE_ERROR);
+//        accountFileDOList.forEach(this::processAccountFileDuplicate);
+//        for (AccountFileDO accountFileDO: accountFileDOList) {
+//            if (accountFileMapper.updateById(accountFileDO) < 0) {
+//                throw new BizException(BizCodeEnum.FILE_BATCH_UPDATE_ERROR);
+//            }
 //        }
-        for (AccountFileDO accountFileDO: accountFileDOList) {
-            if (accountFileMapper.updateById(accountFileDO) < 0) {
-                throw new BizException(BizCodeEnum.FILE_BATCH_UPDATE_ERROR);
+        // 还原前的父文件和当前文件夹是否有重复名称的文件和文件夹
+        accountFileDOList.forEach(accountFileDO ->  {
+            Long selectCount = processAccountFileDuplicate(accountFileDO);
+
+            if (selectCount > 0) {
+                accountFileMapper.updateById(accountFileDO);
             }
-        }
+        });
     }
 
     /**
@@ -360,7 +359,7 @@ public class AccountFileServiceImpl implements AccountFileService {
     /**
      * 文件名是否存在
      */
-    private void processAccountFileDuplicate(AccountFileDO accountFileDO) {
+    public Long processAccountFileDuplicate(AccountFileDO accountFileDO) {
         Long selectCount = accountFileMapper.selectCount(new QueryWrapper<AccountFileDO>()
                 .eq("account_id", accountFileDO.getAccountId())
                 .eq("parent_id", accountFileDO.getParentId())
@@ -379,6 +378,7 @@ public class AccountFileServiceImpl implements AccountFileService {
                 accountFileDO.setFileName(fileName + "_" + System.currentTimeMillis() + "." + fileSuffix);
             }
         }
+        return selectCount;
     }
 
     private void checkAccountFileId(AccountFileDTO accountFileDTO) {

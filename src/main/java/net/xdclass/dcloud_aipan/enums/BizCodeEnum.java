@@ -17,6 +17,7 @@ public enum BizCodeEnum {
     FILE_NOT_EXISTS(220404, "文件不存在"),
     FILE_RENAME_REPEAT(220405,"文件名重复"),
     FILE_DEL_BATCH_ILLEGAL(220406,"文件删除参数错误"),
+    FILE_RECYCLE_ILLEGAL(280406,"回收站操作参数错误"),
     FILE_TYPE_ERROR( 220407, "文件类型错误"),
     FILE_CHUNK_TASK_NOT_EXISTS( 230408, "分片任务不存在"),
     FILE_CHUNK_NOT_ENOUGH( 230409, "分片数量不匹配，合并不够"),
