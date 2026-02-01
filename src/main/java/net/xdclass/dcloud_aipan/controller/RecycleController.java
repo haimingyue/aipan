@@ -39,9 +39,9 @@ public class RecycleController {
     }
 
     /**
-     * 还原回收站文件
+     * 还原回收站文件 - 支持多种路径格式
      */
-    @PostMapping("restore")
+    @PostMapping(value = {"/restore", "restore"}, produces = "application/json;charset=UTF-8")
     public JsonData restore(@RequestBody RecycleRestoreReq req){
         req.setAccountId(LoginInterceptor.threadLocal.get().getId());
         recycleService.restore(req);
