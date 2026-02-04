@@ -7,6 +7,7 @@ import net.xdclass.dcloud_aipan.interceptor.LoginInterceptor;
 import net.xdclass.dcloud_aipan.service.RecycleService;
 import net.xdclass.dcloud_aipan.util.JsonData;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,6 +33,7 @@ public class RecycleController {
      * 彻底删除回收站
      */
     @PostMapping("delete")
+    @Transactional(rollbackFor = Exception.class)
     public JsonData delete(@RequestBody RecycleDeleteReq req){
         req.setAccountId(LoginInterceptor.threadLocal.get().getId());
         recycleService.delete(req);

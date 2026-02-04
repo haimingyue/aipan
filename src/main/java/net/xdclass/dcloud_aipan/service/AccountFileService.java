@@ -42,4 +42,6 @@ public interface AccountFileService {
     boolean checkAndUpdateCapacity(Long accountId, Long fileSize);
 
     Long processAccountFileDuplicate(AccountFileDO accountFileDO);
+
+    List<AccountFileDTO> search(Long accountId, String search);
 }

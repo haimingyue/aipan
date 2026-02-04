@@ -381,6 +381,17 @@ public class AccountFileServiceImpl implements AccountFileService {
         return selectCount;
     }
 
+    @Override
+    public List<AccountFileDTO> search(Long accountId, String search) {
+        List<AccountFileDO> accountFileDOList = accountFileMapper.selectList(new QueryWrapper<AccountFileDO>()
+                .eq("account_id", accountId)
+                .like("file_name", search)
+                .orderByDesc("is_dir")
+                .orderByDesc("gmt_create")
+                .last("limit 30"));
+        return SpringBeanUtil.copyProperties(accountFileDOList, AccountFileDTO.class);
+    }
+
     private void checkAccountFileId(AccountFileDTO accountFileDTO) {
         Long parentId = accountFileDTO.getParentId();
         if (parentId != 0) {
