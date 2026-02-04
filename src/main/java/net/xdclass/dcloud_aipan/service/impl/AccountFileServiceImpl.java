@@ -8,6 +8,7 @@ import net.xdclass.dcloud_aipan.component.StoreEngine;
 import net.xdclass.dcloud_aipan.config.MinioConfig;
 import net.xdclass.dcloud_aipan.controller.req.*;
 import net.xdclass.dcloud_aipan.dto.AccountFileDTO;
+import net.xdclass.dcloud_aipan.dto.FileDownloadDTO;
 import net.xdclass.dcloud_aipan.dto.FolderTreeNodeDTO;
 import net.xdclass.dcloud_aipan.enums.BizCodeEnum;
 import net.xdclass.dcloud_aipan.enums.FileTypeEnum;
@@ -28,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -390,6 +392,30 @@ public class AccountFileServiceImpl implements AccountFileService {
                 .orderByDesc("gmt_create")
                 .last("limit 30"));
         return SpringBeanUtil.copyProperties(accountFileDOList, AccountFileDTO.class);
+    }
+
+    /**
+     * 批量下载 URL 获取
+     */
+    @Override
+    public List<FileDownloadDTO> batchDownloadUrl(FileDownloadReq req) {
+
+        // 获取下载的文件对象，不能是文件夹
+        List<AccountFileDO> accountFileDOList = accountFileMapper.selectList(new QueryWrapper<AccountFileDO>()
+                .eq("account_id", req.getAccountId())
+                .eq("is_dir", FolderFlagEnum.NO.getCode())
+                .eq("id", req.getFileIds()));
+        List<FileDownloadDTO> list = new ArrayList<>();
+        for (AccountFileDO accountFileDO : accountFileDOList) {
+            String objectKey = fileMapper.selectOne(new QueryWrapper<FileDO>().eq("id", accountFileDO.getFileId())).getObjectKey();
+            // 获取下载地址
+            String downloadUrl = fileStoreEngine.getDownloadUrl(minioConfig.getBucketName(), objectKey, minioConfig.getPreSignUrlExpireTime(), TimeUnit.MILLISECONDS);
+            FileDownloadDTO downloadDTO = new FileDownloadDTO(accountFileDO.getFileName(), downloadUrl);
+
+            list.add(downloadDTO);
+        }
+
+        return list;
     }
 
     private void checkAccountFileId(AccountFileDTO accountFileDTO) {

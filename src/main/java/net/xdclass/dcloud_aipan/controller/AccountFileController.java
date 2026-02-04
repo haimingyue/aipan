@@ -3,6 +3,7 @@ package net.xdclass.dcloud_aipan.controller;
 import net.xdclass.dcloud_aipan.controller.req.*;
 import net.xdclass.dcloud_aipan.dto.AccountFileDTO;
 import net.xdclass.dcloud_aipan.dto.FileChunkDTO;
+import net.xdclass.dcloud_aipan.dto.FileDownloadDTO;
 import net.xdclass.dcloud_aipan.dto.FolderTreeNodeDTO;
 import net.xdclass.dcloud_aipan.interceptor.LoginInterceptor;
 import net.xdclass.dcloud_aipan.service.AccountFileService;
@@ -170,6 +171,17 @@ public class AccountFileController {
         Long accountId = LoginInterceptor.threadLocal.get().getId();
         List<AccountFileDTO> list = accountFileService.search(accountId, search);
         return JsonData.buildSuccess(list);
+    }
+
+    /**
+     * 多文件下载URL获取地址
+     */
+    @PostMapping("batch_download_url")
+    public JsonData batchDownloadUrl(@RequestBody FileDownloadReq req) {
+        Long accountId = LoginInterceptor.threadLocal.get().getId();
+        req.setAccountId(accountId);
+        List<FileDownloadDTO> fileDownloadDTOList = accountFileService.batchDownloadUrl(req);
+        return JsonData.buildSuccess(fileDownloadDTOList);
     }
 
 }

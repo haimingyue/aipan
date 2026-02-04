@@ -2,6 +2,7 @@ package net.xdclass.dcloud_aipan.service;
 
 import net.xdclass.dcloud_aipan.controller.req.*;
 import net.xdclass.dcloud_aipan.dto.AccountFileDTO;
+import net.xdclass.dcloud_aipan.dto.FileDownloadDTO;
 import net.xdclass.dcloud_aipan.dto.FolderTreeNodeDTO;
 import net.xdclass.dcloud_aipan.model.AccountFileDO;
 
@@ -44,4 +45,6 @@ public interface AccountFileService {
     Long processAccountFileDuplicate(AccountFileDO accountFileDO);
 
     List<AccountFileDTO> search(Long accountId, String search);
+
+    List<FileDownloadDTO> batchDownloadUrl(FileDownloadReq req);
 }
